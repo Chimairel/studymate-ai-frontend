@@ -1,43 +1,18 @@
-const API_URL = 'http://localhost:3000/api/auth/v1';
+import axios from 'axios';
 
-export const api = {
-  async signup(data: any) {
-    const response = await fetch(`${API_URL}/signup`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    const result = await response.json();
-    if (!response.ok || result.status === 'error') {
-      throw new Error(result.message || 'Failed to sign up');
-    }
-    return result;
-  },
+// Base URL support for both Next.js and Vite env variables, falling back to local port
+const api = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || process.env.VITE_API_URL || 'http://localhost:3000/api',
+});
 
-  async login(data: any) {
-    const response = await fetch(`${API_URL}/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    const result = await response.json();
-    if (!response.ok || result.status === 'error') {
-      throw new Error(result.message || 'Failed to login');
+api.interceptors.request.use(config => {
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
-    return result;
-  },
-
-  async logout() {
-    const response = await fetch(`${API_URL}/logout`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json'
-      },
-    });
-    const result = await response.json();
-    if (!response.ok || result.status === 'error') {
-      throw new Error(result.message || 'Failed to logout');
-    }
-    return result;
   }
-};
+  return config;
+});
+
+export default api;

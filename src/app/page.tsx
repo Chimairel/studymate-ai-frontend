@@ -1,26 +1,8 @@
 "use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '../context/AuthContext';
+import React from 'react';
+import LandingPage from '../views/LandingPage';
 
 export default function Home() {
-  const { token, isLoading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!isLoading) {
-      if (token) {
-        router.push('/dashboard');
-      } else {
-        router.push('/login');
-      }
-    }
-  }, [token, isLoading, router]);
-
-  return (
-    <div className="flex-center min-h-screen">
-      <div className="spinner"></div>
-    </div>
-  );
+  return <LandingPage />;
 }

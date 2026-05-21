@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { AuthProvider } from '../context/AuthContext';
+import { EssayProvider } from '../context/EssayContext';
 
 export const metadata: Metadata = {
-  title: 'AuthFlow - Secure Authentication',
-  description: 'A modern, dynamic authentication flow frontend.',
+  title: 'EssayMind — AI Writing & Essay Coach',
+  description: 'EssayMind gives you real-time feedback on structure, argumentation, clarity, and grammar — like having a writing coach read over your shoulder.',
 };
 
 export default function RootLayout({
@@ -16,11 +17,12 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <AuthProvider>
-          <div className="app-container">
+          <EssayProvider>
             {children}
-          </div>
+          </EssayProvider>
         </AuthProvider>
       </body>
     </html>
   );
 }
+
