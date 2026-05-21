@@ -23,7 +23,7 @@ export const LandingPage: React.FC = () => {
           }}>
             ✍
           </div>
-          Essay<span className="logo-dot">Mind</span>
+          Study<span className="logo-dot">Mate</span>
         </div>
         <div className="landing-nav-links">
           <a className="btn btn-ghost" href="#features">Features</a>
@@ -38,7 +38,7 @@ export const LandingPage: React.FC = () => {
           <div className="hero-eyebrow">✦ AI-Powered Writing Coach</div>
           <h1 className="hero-title">Write essays that actually <em>matter.</em></h1>
           <p className="hero-desc">
-            EssayMind gives you real-time feedback on structure, argumentation, clarity, and
+            StudyMate gives you real-time feedback on structure, argumentation, clarity, and
             grammar — like having a writing coach read over your shoulder, without the judgment.
           </p>
           <div className="hero-cta">
@@ -131,7 +131,7 @@ export const LandingPage: React.FC = () => {
       {/* Footer */}
       <footer className="landing-footer">
         <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: '18px', color: 'white', marginBottom: '8px' }}>
-          EssayMind
+          StudyMate
         </div>
         AI Writing & Essay Coach · Built for students who want to grow.
       </footer>

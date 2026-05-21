@@ -28,6 +28,13 @@ export const DashboardHome: React.FC = () => {
     ? (totalWords / 1000).toFixed(1) + 'k' 
     : totalWords.toString();
 
+  const now = new Date();
+  const essaysThisMonth = essays.filter(e => {
+    if (!e.createdAt) return false;
+    const createdDate = new Date(e.createdAt);
+    return createdDate.getMonth() === now.getMonth() && createdDate.getFullYear() === now.getFullYear();
+  }).length;
+
   // Get first graded essay for latest score ring detail
   const latestGradedEssay = essays.find(e => e.score > 0) || essays[0];
 
@@ -56,13 +63,13 @@ export const DashboardHome: React.FC = () => {
           <StatCard 
             label="Essays Written" 
             value={totalEssays} 
-            changeText="↑ 3 this month" 
-            changeType="up" 
+            changeText={essaysThisMonth > 0 ? `${essaysThisMonth} this month` : "No essays this month"} 
+            changeType={essaysThisMonth > 0 ? "up" : "neutral"} 
           />
           <StatCard 
             label="Avg. Score" 
             value={avgScore || '--'} 
-            changeText={avgScore > 0 ? "↑ +6 vs last month" : "No grades yet"} 
+            changeText={avgScore > 0 ? "+6 vs last month" : "No grades yet"} 
             changeType={avgScore > 0 ? "up" : "neutral"} 
           />
           <StatCard 
@@ -74,8 +81,8 @@ export const DashboardHome: React.FC = () => {
           <StatCard 
             label="Coach Sessions" 
             value={totalEssays > 0 ? totalEssays * 3 + 2 : 0} 
-            changeText="Active learner ✦" 
-            changeType="up" 
+            changeText={totalEssays > 0 ? "Active learner ✦" : "No sessions yet"} 
+            changeType={totalEssays > 0 ? "up" : "neutral"} 
           />
         </div>
 
@@ -165,14 +172,25 @@ export const DashboardHome: React.FC = () => {
               <Card.Title>AI Coach Tips for You</Card.Title>
             </Card.Header>
             <Card.Body>
-              <div className="quick-tip">
-                <div className="tip-label">📌 Structure</div>
-                <p>Your topic sentences are strong, but your body paragraphs sometimes drift off-topic. Try restating the paragraph's main claim in the closing sentence.</p>
-              </div>
-              <div className="quick-tip" style={{ background: 'var(--blue-light)', borderLeftColor: 'var(--blue)' }}>
-                <div className="tip-label" style={{ color: 'var(--blue)' }}>💬 Argumentation</div>
-                <p>Consider adding counterarguments to your essays. Acknowledging the opposing view and refuting it strengthens your credibility significantly.</p>
-              </div>
+              {totalEssays > 0 ? (
+                <>
+                  <div className="quick-tip">
+                    <div className="tip-label">📌 Structure</div>
+                    <p>Your topic sentences are strong, but your body paragraphs sometimes drift off-topic. Try restating the paragraph's main claim in the closing sentence.</p>
+                  </div>
+                  <div className="quick-tip" style={{ background: 'var(--blue-light)', borderLeftColor: 'var(--blue)' }}>
+                    <div className="tip-label" style={{ color: 'var(--blue)' }}>💬 Argumentation</div>
+                    <p>Consider adding counterarguments to your essays. Acknowledging the opposing view and refuting it strengthens your credibility significantly.</p>
+                  </div>
+                </>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', padding: '36px 12px', color: 'var(--muted)', textAlign: 'center' }}>
+                  <div style={{ fontSize: '32px', marginBottom: '8px' }}>💡</div>
+                  <p style={{ fontSize: '13px', lineHeight: 1.5 }}>
+                    No coach tips yet! Write your first essay and get AI feedback to see dynamic writing tips.
+                  </p>
+                </div>
+              )}
             </Card.Body>
           </Card>
 
@@ -180,25 +198,49 @@ export const DashboardHome: React.FC = () => {
           <Card>
             <Card.Header>
               <Card.Title>Writing Streak</Card.Title>
-              <Badge variant="gold">🔥 5 Days</Badge>
+              <Badge variant={(user?.streak || 0) > 0 ? "gold" : "neutral"} style={{ opacity: (user?.streak || 0) > 0 ? 1 : 0.6 }}>
+                🔥 {user?.streak || 0} {(user?.streak || 0) === 1 ? 'Day' : 'Days'}
+              </Badge>
             </Card.Header>
             <Card.Body>
               <div style={{ display: 'flex', gap: '6px', marginBottom: '16px' }}>
-                <div style={{ flex: 1, background: 'var(--green)', borderRadius: '4px', height: '8px' }}></div>
-                <div style={{ flex: 1, background: 'var(--green)', borderRadius: '4px', height: '8px' }}></div>
-                <div style={{ flex: 1, background: 'var(--green)', borderRadius: '4px', height: '8px' }}></div>
-                <div style={{ flex: 1, background: 'var(--green)', borderRadius: '4px', height: '8px' }}></div>
-                <div style={{ flex: 1, background: 'var(--green)', borderRadius: '4px', height: '8px' }}></div>
-                <div style={{ flex: 1, background: 'var(--border)', borderRadius: '4px', height: '8px' }}></div>
-                <div style={{ flex: 1, background: 'var(--border)', borderRadius: '4px', height: '8px' }}></div>
+                {[...Array(7)].map((_, i) => (
+                  <div 
+                    key={i} 
+                    style={{ 
+                      flex: 1, 
+                      background: i < Math.min(user?.streak || 0, 7) ? 'var(--green)' : 'var(--border)', 
+                      borderRadius: '4px', 
+                      height: '8px' 
+                    }}
+                  ></div>
+                ))}
               </div>
-              <p className="text-muted" style={{ fontSize: '13px', lineHeight: 1.5 }}>
-                You've written for <strong>5 consecutive days</strong>. Keep it up — consistent practice is the fastest path to improvement.
-              </p>
+              {(user?.streak || 0) > 0 ? (
+                <p className="text-muted" style={{ fontSize: '13px', lineHeight: 1.5 }}>
+                  You've written for <strong>{user?.streak} consecutive {(user?.streak || 0) === 1 ? 'day' : 'days'}</strong>. Keep it up — consistent practice is the fastest path to improvement.
+                </p>
+              ) : (
+                <p className="text-muted" style={{ fontSize: '13px', lineHeight: 1.5 }}>
+                  Start your writing streak today! Write and analyze an essay to get your daily streak started.
+                </p>
+              )}
               <div style={{ marginTop: '16px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                <Badge variant="gold">🏆 First Essay</Badge>
-                <Badge variant="green">📚 5 Essays Written</Badge>
-                <Badge variant="blue">✏️ 10k Words</Badge>
+                {totalEssays >= 1 ? (
+                  <Badge variant="gold">🏆 First Essay</Badge>
+                ) : (
+                  <Badge variant="neutral" style={{ opacity: 0.5 }}>🏆 First Essay (Locked)</Badge>
+                )}
+                {totalEssays >= 5 ? (
+                  <Badge variant="green">📚 5 Essays Written</Badge>
+                ) : (
+                  <Badge variant="neutral" style={{ opacity: 0.5 }}>📚 5 Essays (Locked)</Badge>
+                )}
+                {totalWords >= 10000 ? (
+                  <Badge variant="blue">✏️ 10k Words</Badge>
+                ) : (
+                  <Badge variant="neutral" style={{ opacity: 0.5 }}>✏️ 10k Words (Locked)</Badge>
+                )}
               </div>
             </Card.Body>
           </Card>

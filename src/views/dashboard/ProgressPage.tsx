@@ -1,11 +1,12 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useEssay } from '../../hooks/useEssay';
 import ProgressChart from '../../components/progress/ProgressChart';
 import AchievementBadge from '../../components/progress/AchievementBadge';
 import Badge from '../../components/ui/Badge';
 import Card from '../../components/ui/Card';
+import { statsService, Achievement, ProgressStats } from '../../services/statsService';
 
 export const ProgressPage: React.FC = () => {
   const { essays } = useEssay();
@@ -14,12 +15,24 @@ export const ProgressPage: React.FC = () => {
   const gradedEssays = essays.filter((e) => e.score > 0);
   const totalGraded = gradedEssays.length;
 
+  const [achievementsList, setAchievementsList] = useState<Achievement[]>([]);
+  const [progressStats, setProgressStats] = useState<ProgressStats | null>(null);
+
+  useEffect(() => {
+    statsService.getAchievements().then(data => {
+      if (data) setAchievementsList(data);
+    });
+    statsService.getProgress().then(data => {
+      if (data) setProgressStats(data);
+    });
+  }, []);
+
   const avgSubscores = {
-    structure: totalGraded > 0 ? Math.round(gradedEssays.reduce((sum, e) => sum + (e.subScores?.structure || 0), 0) / totalGraded) : 85,
-    argument: totalGraded > 0 ? Math.round(gradedEssays.reduce((sum, e) => sum + (e.subScores?.argument || 0), 0) / totalGraded) : 80,
-    clarity: totalGraded > 0 ? Math.round(gradedEssays.reduce((sum, e) => sum + (e.subScores?.clarity || 0), 0) / totalGraded) : 72,
-    grammar: totalGraded > 0 ? Math.round(gradedEssays.reduce((sum, e) => sum + (e.subScores?.grammar || 0), 0) / totalGraded) : 90,
-    evidence: totalGraded > 0 ? Math.round(gradedEssays.reduce((sum, e) => sum + (e.subScores?.evidence || 0), 0) / totalGraded) : 68,
+    structure: totalGraded > 0 ? Math.round(gradedEssays.reduce((sum, e) => sum + (e.subScores?.structure || 0), 0) / totalGraded) : 0,
+    argument: totalGraded > 0 ? Math.round(gradedEssays.reduce((sum, e) => sum + (e.subScores?.argument || 0), 0) / totalGraded) : 0,
+    clarity: totalGraded > 0 ? Math.round(gradedEssays.reduce((sum, e) => sum + (e.subScores?.clarity || 0), 0) / totalGraded) : 0,
+    grammar: totalGraded > 0 ? Math.round(gradedEssays.reduce((sum, e) => sum + (e.subScores?.grammar || 0), 0) / totalGraded) : 0,
+    evidence: totalGraded > 0 ? Math.round(gradedEssays.reduce((sum, e) => sum + (e.subScores?.evidence || 0), 0) / totalGraded) : 0,
   };
 
   // Find weakest skill
@@ -31,24 +44,16 @@ export const ProgressPage: React.FC = () => {
     { name: 'Evidence', score: avgSubscores.evidence, desc: 'ensure you cite credible facts, statistics, or research studies to validate assertions' },
   ];
 
-  const weakestSkill = skills.reduce((weakest, current) => current.score < weakest.score ? current : weakest, skills[0]);
-
-  // Calculate stats for achievements
-  const totalWords = essays.reduce((sum, e) => sum + (e.wordCount || 0), 0);
-  const highestScore = essays.reduce((max, e) => e.score > max ? e.score : max, 0);
-
-  const achievementsList = [
-    { icon: '✍️', name: 'First Draft', desc: 'Submitted your first essay', unlocked: essays.length >= 1 },
-    { icon: '📚', name: 'Prolific Writer', desc: 'Wrote 5 essays', unlocked: essays.length >= 5 },
-    { icon: '🎯', name: 'Score 80+', desc: 'Achieved an 80+ score', unlocked: highestScore >= 80 },
-    { icon: '🔥', name: '5-Day Streak', desc: 'Wrote 5 days in a row', unlocked: true }, // Default unlocked as in mockup
-    { icon: '🏆', name: 'Score 90+', desc: 'Achieve a 90+ score', unlocked: highestScore >= 90 },
-    { icon: '📖', name: 'Novelist', desc: 'Write 50,000 words', unlocked: totalWords >= 50000 },
-    { icon: '🌟', name: 'Perfect Essay', desc: 'Score 100/100', unlocked: highestScore === 100 },
-    { icon: '📅', name: '30-Day Streak', desc: 'Write 30 days straight', unlocked: false }
-  ];
+  const weakestSkill = totalGraded > 0 
+    ? skills.reduce((weakest, current) => current.score < weakest.score ? current : weakest, skills[0])
+    : { name: 'Writing', desc: 'write some essays to identify areas for improvement!' };
 
   const unlockedCount = achievementsList.filter(a => a.unlocked).length;
+  
+  const chartData = progressStats?.scoreTrend?.map((item: any) => ({
+    label: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    value: item.score
+  }));
 
   return (
     <div>
@@ -66,10 +71,9 @@ export const ProgressPage: React.FC = () => {
           <Card>
             <Card.Header>
               <Card.Title>Score History</Card.Title>
-              <Badge variant="green">↑ +14 pts this month</Badge>
             </Card.Header>
             <Card.Body>
-              <ProgressChart />
+              <ProgressChart data={chartData} />
             </Card.Body>
           </Card>
 
@@ -108,9 +112,9 @@ export const ProgressPage: React.FC = () => {
               {achievementsList.map((ach, idx) => (
                 <AchievementBadge 
                   key={idx}
-                  icon={ach.icon}
-                  name={ach.name}
-                  desc={ach.desc}
+                  icon={ach.icon === 'pencil' ? '✍️' : ach.icon === 'book' ? '📚' : ach.icon === 'fire' ? '🔥' : ach.icon === 'trophy' ? '🏆' : ach.icon === 'archive' ? '📖' : ach.icon === 'award' ? '🌟' : '🎯'}
+                  name={ach.title}
+                  desc={ach.description}
                   unlocked={ach.unlocked}
                 />
               ))}

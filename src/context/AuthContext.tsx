@@ -3,13 +3,22 @@
 import { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { authService, User } from '../services/authService';
 
+const enrichUser = (userData: any): User => {
+  if (!userData) return userData;
+  const name = userData.firstName && userData.lastName ? `${userData.firstName} ${userData.lastName}` : userData.name || userData.email?.split('@')[0] || 'User';
+  return {
+    ...userData,
+    name
+  };
+};
+
 interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (credentials: any) => Promise<void>;
   signup: (userData: any) => Promise<void>;
   logout: () => Promise<void>;
-  updateUser: (updates: Partial<User>) => void;
+  updateUser: (updates: Partial<User>) => Promise<void>;
   isLoading: boolean;
 }
 
@@ -29,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (storedToken && storedUser) {
         setToken(storedToken);
         try {
-          setUser(JSON.parse(storedUser));
+          setUser(enrichUser(JSON.parse(storedUser)));
         } catch (e) {
           console.error('Failed to parse stored user', e);
         }
@@ -67,11 +76,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: credentials.email,
         role: 'College Student'
       };
+      const enrichedUser = enrichUser(userData);
       
       setToken(authToken);
-      setUser(userData);
+      setUser(enrichedUser);
       localStorage.setItem('token', authToken);
-      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('user', JSON.stringify(enrichedUser));
     } catch (error) {
       throw error;
     } finally {
@@ -112,11 +122,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: userData.email,
         role: userData.role || 'College Student'
       };
+      const enrichedUser = enrichUser(userObj);
 
       setToken(authToken);
-      setUser(userObj);
+      setUser(enrichedUser);
       localStorage.setItem('token', authToken);
-      localStorage.setItem('user', JSON.stringify(userObj));
+      localStorage.setItem('user', JSON.stringify(enrichedUser));
     } catch (error) {
       throw error;
     } finally {
@@ -137,11 +148,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateUser = (updates: Partial<User>) => {
+  const updateUser = async (updates: Partial<User>) => {
     if (!user) return;
-    const updatedUser = { ...user, ...updates };
-    setUser(updatedUser);
-    localStorage.setItem('user', JSON.stringify(updatedUser));
+    try {
+      await authService.updateMe(updates);
+      const updatedUser = enrichUser({ ...user, ...updates });
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    } catch (e) {
+      console.error('Failed to update user', e);
+      throw e;
+    }
   };
 
   return (

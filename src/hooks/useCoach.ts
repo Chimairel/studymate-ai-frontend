@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { coachService, ChatMessage } from '../services/coachService';
 import { useEssay } from '../context/EssayContext';
 
-const CHAT_STORAGE_PREFIX = 'essaymind_chat_';
+const CHAT_STORAGE_PREFIX = 'studymate_chat_';
 
 export function useCoach(essayId: string | undefined) {
   const { updateEssay, currentEssay } = useEssay();

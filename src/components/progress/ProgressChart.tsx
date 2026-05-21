@@ -12,16 +12,15 @@ interface ProgressChartProps {
 }
 
 export const ProgressChart: React.FC<ProgressChartProps> = ({ data }) => {
-  const defaultData: ChartDataPoint[] = [
-    { label: 'Jan', value: 60, colorClass: 'var(--border)' },
-    { label: 'Feb', value: 55, colorClass: 'var(--border)' },
-    { label: 'Mar', value: 65, colorClass: 'var(--border)' },
-    { label: 'Apr', value: 70, colorClass: 'var(--muted)' },
-    { label: 'May', value: 78, colorClass: 'var(--accent)' },
-    { label: 'Jun', value: 82, colorClass: 'var(--accent)', opacity: 0.5 },
-  ];
+  if (!data || data.length === 0) {
+    return (
+      <div className="progress-chart-area" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', minHeight: '200px' }}>
+        No score history available yet.
+      </div>
+    );
+  }
 
-  const chartData = data || defaultData;
+  const chartData = data;
 
   const getColorValue = (colorClass: string) => {
     // If it's a CSS variable inside standard design tokens

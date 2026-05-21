@@ -15,6 +15,8 @@ export interface User {
     darkMode?: boolean;
     defaultEssayMode?: string;
   };
+  streak?: number;
+  createdAt?: string;
 }
 
 export interface AuthResponse {
@@ -51,5 +53,10 @@ export const authService = {
   getMe: async (): Promise<{ user: User }> => {
     const response = await api.get('/auth/v1/me');
     return response.data;
+  },
+
+  updateMe: async (updates: Partial<User>): Promise<{ user: User }> => {
+    const response = await api.put('/auth/v1/me', updates);
+    return response.data.data;
   }
 };

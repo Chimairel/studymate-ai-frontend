@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useEssay } from '../../hooks/useEssay';
 import Toggle from '../../components/ui/Toggle';
+import { statsService, DashboardStats } from '../../services/statsService';
 
 export const ProfilePage: React.FC = () => {
   const { user, updateUser } = useAuth();
@@ -17,7 +18,15 @@ export const ProfilePage: React.FC = () => {
   const [lastName, setLastName] = useState(initialLastName);
   const [email, setEmail] = useState(user?.email || '');
   const [role, setRole] = useState(user?.role || 'College Student');
-  const [bio, setBio] = useState(user?.bio || '3rd year BS Computer Science student who loves writing about tech and society.');
+  const [bio, setBio] = useState(user?.bio || '');
+
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
+
+  useEffect(() => {
+    statsService.getDashboard().then(data => {
+      if (data) setDashboardStats(data);
+    });
+  }, []);
 
   // Preference State
   const [realTimeFeedback, setRealTimeFeedback] = useState(
@@ -40,18 +49,15 @@ export const ProfilePage: React.FC = () => {
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   // Calculate dynamic stats
-  const totalEssays = essays.length;
-  const gradedEssays = essays.filter(e => e.score > 0);
-  const avgScore = gradedEssays.length > 0 
-    ? Math.round(gradedEssays.reduce((sum, e) => sum + e.score, 0) / gradedEssays.length)
-    : 78; // Default mock average if none written yet, mirroring index.html default
+  const totalEssays = dashboardStats?.totalEssays ?? essays.length;
+  const avgScore = dashboardStats?.avgScore ?? 0;
   
-  const totalWords = essays.reduce((sum, e) => sum + (e.wordCount || 0), 0);
+  const totalWords = dashboardStats?.totalWords ?? essays.reduce((sum, e) => sum + (e.wordCount || 0), 0);
   const wordsFormatted = totalWords >= 1000 
     ? (totalWords / 1000).toFixed(1) + 'k' 
-    : totalWords > 0 ? totalWords.toString() : '14k'; // default mock words if none written, mirroring index.html
+    : totalWords.toString();
 
-  const handleSaveChanges = () => {
+  const handleSaveChanges = async () => {
     try {
       const updatedData = {
         firstName,
@@ -69,7 +75,7 @@ export const ProfilePage: React.FC = () => {
         }
       };
 
-      updateUser(updatedData);
+      await updateUser(updatedData);
 
       // Handle dark mode side effects if needed (applying class to document)
       if (darkMode) {
@@ -130,13 +136,13 @@ export const ProfilePage: React.FC = () => {
             <div className="profile-email">{email || user?.email || 'user@example.com'}</div>
             <div className="profile-badges">
               <div className="profile-badge">{role}</div>
-              <div className="profile-badge">🔥 {totalEssays > 0 ? '5-Day Streak' : '0-Day Streak'}</div>
-              <div className="profile-badge">Member since Jan 2025</div>
+              <div className="profile-badge">🔥 {dashboardStats?.streak || 0}-Day Streak</div>
+              <div className="profile-badge">Member since {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Now'}</div>
             </div>
           </div>
           <div className="profile-stats">
             <div>
-              <div className="profile-stat-val">{totalEssays > 0 ? totalEssays : 12}</div>
+              <div className="profile-stat-val">{totalEssays}</div>
               <div className="profile-stat-label">Essays</div>
             </div>
             <div>

@@ -117,14 +117,14 @@ export const AuthPage: React.FC = () => {
           <div>
             <div style={{ fontSize: '28px', marginBottom: '12px' }}>✍️</div>
             <h2 className="auth-left-title">Write with <em>confidence.</em><br />Edit with clarity.</h2>
-            <p className="auth-left-desc">EssayMind coaches you through every sentence — so you learn while you write, not after.</p>
+            <p className="auth-left-desc">StudyMate coaches you through every sentence — so you learn while you write, not after.</p>
             
             <div className="auth-testimonial">
-              <p>"My argumentative essays went from a C to an A in just 3 weeks of using EssayMind. The AI coach is actually helpful, not just generic tips."</p>
+              <p>"My argumentative essays went from a C to an A in just 3 weeks of using StudyMate. The AI coach is actually helpful, not just generic tips."</p>
               <div className="attr">— Maria L., 3rd Year BS Communications</div>
             </div>
           </div>
-          <div style={{ fontSize: '12px', color: 'rgba(200,192,176,0.5)' }}>© 2026 EssayMind. All rights reserved.</div>
+          <div style={{ fontSize: '12px', color: 'rgba(200,192,176,0.5)' }}>© 2026 StudyMate. All rights reserved.</div>
         </div>
 
         {/* Right Form Panel */}
@@ -197,7 +197,7 @@ export const AuthPage: React.FC = () => {
                 className="btn btn-primary auth-submit"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? 'Logging in...' : 'Log In to EssayMind →'}
+                {isSubmitting ? 'Logging in...' : 'Log In to StudyMate →'}
               </button>
               
               <div className="auth-divider">or continue with</div>

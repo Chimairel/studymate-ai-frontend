@@ -4,8 +4,8 @@ import { AuthProvider } from '../context/AuthContext';
 import { EssayProvider } from '../context/EssayContext';
 
 export const metadata: Metadata = {
-  title: 'EssayMind — AI Writing & Essay Coach',
-  description: 'EssayMind gives you real-time feedback on structure, argumentation, clarity, and grammar — like having a writing coach read over your shoulder.',
+  title: 'StudyMate — AI Writing & Essay Coach',
+  description: 'StudyMate gives you real-time feedback on structure, argumentation, clarity, and grammar — like having a writing coach read over your shoulder.',
 };
 
 export default function RootLayout({

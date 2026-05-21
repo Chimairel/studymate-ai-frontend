@@ -30,7 +30,7 @@ export const Sidebar: React.FC = () => {
     <div className="sidebar">
       <div className="sidebar-logo">
         <div className="logo-icon">✍</div>
-        <span className="logo-text">EssayMind</span>
+        <span className="logo-text">StudyMate</span>
       </div>
       <nav className="sidebar-nav">
         <div className="nav-section-label">Menu</div>
