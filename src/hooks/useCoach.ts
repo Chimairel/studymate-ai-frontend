@@ -7,39 +7,41 @@ import { useEssay } from '../context/EssayContext';
 const CHAT_STORAGE_PREFIX = 'essaymind_chat_';
 
 export function useCoach(essayId: string | undefined) {
-  const { updateEssay } = useEssay();
+  const { updateEssay, currentEssay } = useEssay();
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
 
   // Load chat history
   useEffect(() => {
-    if (!essayId) {
-      setChatHistory([]);
-      return;
-    }
-
-    const stored = localStorage.getItem(`${CHAT_STORAGE_PREFIX}${essayId}`);
-    if (stored) {
-      try {
-        setChatHistory(JSON.parse(stored));
-      } catch (e) {
-        console.error('Failed to parse chat history', e);
+    setTimeout(() => {
+      if (!essayId) {
         setChatHistory([]);
+        return;
       }
-    } else {
-      // Default welcome message
-      const defaultWelcome: ChatMessage[] = [
-        {
-          id: 'welcome',
-          sender: 'coach',
-          text: `Hi there! I'm your AI Writing Coach. Click the "Save & Analyze" button at the top to generate detailed scores and revision tips, or ask me any question in the chat!`,
-          timestamp: new Date().toISOString()
+
+      const stored = localStorage.getItem(`${CHAT_STORAGE_PREFIX}${essayId}`);
+      if (stored) {
+        try {
+          setChatHistory(JSON.parse(stored));
+        } catch (e) {
+          console.error('Failed to parse chat history', e);
+          setChatHistory([]);
         }
-      ];
-      setChatHistory(defaultWelcome);
-      localStorage.setItem(`${CHAT_STORAGE_PREFIX}${essayId}`, JSON.stringify(defaultWelcome));
-    }
+      } else {
+        // Default welcome message
+        const defaultWelcome: ChatMessage[] = [
+          {
+            id: 'welcome',
+            sender: 'coach',
+            text: `Hi there! I'm your AI Writing Coach. Click the "Save & Analyze" button at the top to generate detailed scores and revision tips, or ask me any question in the chat!`,
+            timestamp: new Date().toISOString()
+          }
+        ];
+        setChatHistory(defaultWelcome);
+        localStorage.setItem(`${CHAT_STORAGE_PREFIX}${essayId}`, JSON.stringify(defaultWelcome));
+      }
+    }, 0);
   }, [essayId]);
 
   const analyze = useCallback(async (title: string, content: string, type: 'Argumentative' | 'Expository' | 'Analytical' | 'Narrative') => {
@@ -47,13 +49,13 @@ export function useCoach(essayId: string | undefined) {
     
     setIsAnalyzing(true);
     try {
-      const result = await coachService.analyzeEssay(title, content, type);
+      const result = await coachService.analyzeEssay(title, content, type, essayId);
       
       const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
       const charCount = content.length;
 
       // Update the essay in our global context & service
-      const updatedEssay = updateEssay(essayId, {
+      const updatedEssay = await updateEssay(essayId, {
         title,
         content,
         type,
@@ -104,9 +106,12 @@ export function useCoach(essayId: string | undefined) {
       return updatedHistory;
     });
 
+    const essayContent = currentEssay?.content || '';
+    const essayType = currentEssay?.type || 'Argumentative';
+
     setIsTyping(true);
     try {
-      const coachText = await coachService.getMockChatReply(text, updatedHistory);
+      const coachText = await coachService.getChatReply(text, updatedHistory, essayContent, essayType);
       const coachMsg: ChatMessage = {
         id: `coach-${Date.now()}`,
         sender: 'coach',
@@ -124,7 +129,7 @@ export function useCoach(essayId: string | undefined) {
     } finally {
       setIsTyping(false);
     }
-  }, [essayId]);
+  }, [essayId, currentEssay]);
 
   const clearChat = useCallback(() => {
     if (!essayId) return;

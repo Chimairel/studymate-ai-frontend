@@ -25,15 +25,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
     
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
-        console.error('Failed to parse stored user', e);
+    setTimeout(() => {
+      if (storedToken && storedUser) {
+        setToken(storedToken);
+        try {
+          setUser(JSON.parse(storedUser));
+        } catch (e) {
+          console.error('Failed to parse stored user', e);
+        }
       }
-    }
-    setIsLoading(false);
+      setIsLoading(false);
+    }, 0);
   }, []);
 
   const login = async (credentials: any) => {
@@ -42,7 +44,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       let response;
       try {
         response = await authService.login(credentials);
-      } catch (apiError) {
+      } catch (apiError: any) {
+        if (apiError.response) {
+          throw apiError;
+        }
         console.warn('Backend API login failed. Falling back to local mock authentication.', apiError);
         response = {
           token: 'dummy-token',
@@ -68,7 +73,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('token', authToken);
       localStorage.setItem('user', JSON.stringify(userData));
     } catch (error) {
-      console.error('Login failed in AuthContext', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -81,7 +85,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       let response;
       try {
         response = await authService.signup(userData);
-      } catch (apiError) {
+      } catch (apiError: any) {
+        if (apiError.response) {
+          throw apiError;
+        }
         console.warn('Backend API signup failed. Falling back to local mock registration.', apiError);
         response = {
           token: 'dummy-token',
@@ -111,7 +118,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('token', authToken);
       localStorage.setItem('user', JSON.stringify(userObj));
     } catch (error) {
-      console.error('Signup failed in AuthContext', error);
       throw error;
     } finally {
       setIsLoading(false);

@@ -30,15 +30,16 @@ export const EditorPage: React.FC = () => {
         currentEssayIdRef.current = currentEssay.id;
       }
     } else {
-      // Clear for new essay
-      setTitle('');
-      setContent('');
-      setType('Argumentative');
-      currentEssayIdRef.current = undefined;
+      if (currentEssayIdRef.current !== undefined) {
+        setTitle('');
+        setContent('');
+        setType('Argumentative');
+        currentEssayIdRef.current = undefined;
+      }
     }
   }, [currentEssay]);
 
-  // Hook for coach interactions bound to currentEssay.id
+  // Hook for coach interactions bound to currentEssay?.id
   const { 
     chatHistory, 
     isAnalyzing, 
@@ -64,14 +65,18 @@ export const EditorPage: React.FC = () => {
 
     if (!currentEssay) {
       // 1. Create the essay first if it doesn't exist
-      const created = addEssay(title, content, type);
+      const created = await addEssay(title, content, type);
+      if (!created) {
+        alert('Failed to save your new essay.');
+        return;
+      }
+      
       // Wait for React to process state updates, then analyze
-      // To run analysis immediately, we can call coachService directly and update the created essay
       setIsLocalAnalyzing(true);
       try {
         const { coachService } = await import('../../services/coachService');
-        const res = await coachService.analyzeEssay(title, content, type);
-        updateEssay(created.id, {
+        const res = await coachService.analyzeEssay(title, content, type, created.id);
+        await updateEssay(created.id, {
           title,
           content,
           type,
@@ -99,7 +104,7 @@ export const EditorPage: React.FC = () => {
   const loading = isAnalyzing || isLocalAnalyzing;
 
   // Handle applying a suggested correction
-  const handleApplySuggestion = (original: string, suggestion: string) => {
+  const handleApplySuggestion = async (original: string, suggestion: string) => {
     if (!original || !suggestion) return;
     
     // Find the first occurrence of the original text and replace it
@@ -122,7 +127,7 @@ export const EditorPage: React.FC = () => {
         item => item.original !== original
       );
 
-      updateEssay(currentEssay.id, {
+      await updateEssay(currentEssay.id, {
         content: updatedContent,
         wordCount: updatedWords,
         charCount: updatedChars,

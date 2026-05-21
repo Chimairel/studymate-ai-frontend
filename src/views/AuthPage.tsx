@@ -29,10 +29,8 @@ export const AuthPage: React.FC = () => {
   // Sync tab with search params
   useEffect(() => {
     const tabParam = searchParams?.get('tab');
-    if (tabParam === 'register') {
-      setActiveTab('register');
-    } else {
-      setActiveTab('login');
+    if (tabParam === 'register' || tabParam === 'login') {
+      setActiveTab(tabParam);
     }
   }, [searchParams]);
 
@@ -56,7 +54,14 @@ export const AuthPage: React.FC = () => {
       await login({ email: loginEmail, password: loginPassword });
       router.push('/dashboard');
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Invalid email or password. Please try again.');
+      const responseData = err?.response?.data;
+      let errorMessage = responseData?.message || 'Invalid email or password. Please try again.';
+      
+      if (responseData?.errors && Array.isArray(responseData.errors) && responseData.errors.length > 0) {
+        errorMessage = responseData.errors.map((e: any) => e.message).join(', ');
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -66,6 +71,11 @@ export const AuthPage: React.FC = () => {
     e.preventDefault();
     if (!firstName || !lastName || !registerEmail || !registerPassword) {
       setError('Please fill in all fields.');
+      return;
+    }
+
+    if (registerPassword.length < 8) {
+      setError('Password must be at least 8 characters long.');
       return;
     }
 
@@ -81,7 +91,15 @@ export const AuthPage: React.FC = () => {
       });
       router.push('/dashboard');
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Failed to create account. Email may already be taken.');
+      const responseData = err?.response?.data;
+      let errorMessage = responseData?.message || 'Failed to create account. Email may already be taken.';
+      
+      // Extract detailed Zod validation errors if present
+      if (responseData?.errors && Array.isArray(responseData.errors) && responseData.errors.length > 0) {
+        errorMessage = responseData.errors.map((e: any) => e.message).join(', ');
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -245,6 +263,7 @@ export const AuthPage: React.FC = () => {
                   value={registerPassword}
                   onChange={(e) => setRegisterPassword(e.target.value)}
                   disabled={isSubmitting}
+                  minLength={8}
                   required
                 />
               </div>

@@ -2,30 +2,37 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Essay, essayService } from '../services/essayService';
+import { useAuth } from './AuthContext';
 
 interface EssayContextType {
   essays: Essay[];
   currentEssay: Essay | null;
   isLoading: boolean;
-  loadEssays: () => void;
-  getEssay: (id: string) => Essay | null;
-  addEssay: (title: string, content: string, type: 'Argumentative' | 'Expository' | 'Analytical' | 'Narrative') => Essay;
-  updateEssay: (id: string, updates: Partial<Omit<Essay, 'id' | 'createdAt'>>) => Essay | null;
-  deleteEssay: (id: string) => boolean;
+  loadEssays: () => Promise<void>;
+  getEssay: (id: string) => Promise<Essay | null>;
+  addEssay: (title: string, content: string, type: 'Argumentative' | 'Expository' | 'Analytical' | 'Narrative') => Promise<Essay | null>;
+  updateEssay: (id: string, updates: Partial<Omit<Essay, 'id' | 'createdAt'>>) => Promise<Essay | null>;
+  deleteEssay: (id: string) => Promise<boolean>;
   setCurrentEssay: (essay: Essay | null) => void;
 }
 
 const EssayContext = createContext<EssayContextType | undefined>(undefined);
 
 export function EssayProvider({ children }: { children: ReactNode }) {
+  const { token } = useAuth();
   const [essays, setEssays] = useState<Essay[]>([]);
   const [currentEssay, setCurrentEssayState] = useState<Essay | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadEssays = () => {
+  const loadEssays = async () => {
+    if (!token) {
+      setEssays([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
-      const data = essayService.getEssays();
+      const data = await essayService.getEssays();
       setEssays(data);
       
       // Keep currentEssay in sync with updated list if it is set
@@ -45,54 +52,72 @@ export function EssayProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    loadEssays();
-  }, []);
+    setTimeout(() => {
+      loadEssays();
+    }, 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
-  const getEssay = (id: string): Essay | null => {
-    return essayService.getEssayById(id);
+  const getEssay = async (id: string): Promise<Essay | null> => {
+    return await essayService.getEssayById(id);
   };
 
-  const addEssay = (title: string, content: string, type: 'Argumentative' | 'Expository' | 'Analytical' | 'Narrative'): Essay => {
+  const addEssay = async (title: string, content: string, type: 'Argumentative' | 'Expository' | 'Analytical' | 'Narrative'): Promise<Essay | null> => {
     const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
     const charCount = content.length;
     
-    const newEssay = essayService.createEssay({
-      title,
-      content,
-      type,
-      score: 0,
-      wordCount,
-      charCount,
-      subScores: {
-        structure: 0,
-        argument: 0,
-        clarity: 0,
-        grammar: 0,
-        evidence: 0
-      },
-      feedback: []
-    });
+    try {
+      const newEssay = await essayService.createEssay({
+        title,
+        content,
+        type,
+        score: 0,
+        wordCount,
+        charCount,
+        subScores: {
+          structure: 0,
+          argument: 0,
+          clarity: 0,
+          grammar: 0,
+          evidence: 0
+        },
+        feedback: []
+      });
 
-    loadEssays();
-    setCurrentEssayState(newEssay);
-    return newEssay;
-  };
-
-  const updateEssay = (id: string, updates: Partial<Omit<Essay, 'id' | 'createdAt'>>): Essay | null => {
-    const updated = essayService.updateEssay(id, updates);
-    loadEssays();
-    return updated;
-  };
-
-  const deleteEssay = (id: string): boolean => {
-    const success = essayService.deleteEssay(id);
-    if (success) {
-      if (currentEssay?.id === id) {
-        setCurrentEssayState(null);
-      }
-      loadEssays();
+      await loadEssays();
+      setCurrentEssayState(newEssay);
+      return newEssay;
+    } catch (e) {
+      console.error('Failed to add essay', e);
+      return null;
     }
-    return success;
+  };
+
+  const updateEssay = async (id: string, updates: Partial<Omit<Essay, 'id' | 'createdAt'>>): Promise<Essay | null> => {
+    try {
+      const updated = await essayService.updateEssay(id, updates);
+      await loadEssays();
+      return updated;
+    } catch (e) {
+      console.error('Failed to update essay', e);
+      return null;
+    }
+  };
+
+  const deleteEssay = async (id: string): Promise<boolean> => {
+    try {
+      const success = await essayService.deleteEssay(id);
+      if (success) {
+        if (currentEssay?.id === id) {
+          setCurrentEssayState(null);
+        }
+        await loadEssays();
+      }
+      return success;
+    } catch (e) {
+      console.error('Failed to delete essay', e);
+      return false;
+    }
   };
 
   const setCurrentEssay = (essay: Essay | null) => {
