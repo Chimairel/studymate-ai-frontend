@@ -69,7 +69,7 @@ export const Sidebar: React.FC = () => {
           {getInitials(user?.name)}
         </div>
         <div className="user-info">
-          <div className="user-name">{user?.name || 'Guest User'}</div>
+          <div className="user-name">{user?.name || 'User'}</div>
           <div className="user-role">{user?.role || 'Member'}</div>
         </div>
       </div>

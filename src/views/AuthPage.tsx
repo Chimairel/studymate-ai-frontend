@@ -200,19 +200,7 @@ export const AuthPage: React.FC = () => {
                 {isSubmitting ? 'Logging in...' : 'Log In to StudyMate →'}
               </button>
               
-              <div className="auth-divider">or continue with</div>
-              
-              <button 
-                type="button" 
-                className="btn btn-outline auth-submit" 
-                style={{ marginTop: 0 }}
-                onClick={() => {
-                  setError('OAuth is disabled in this environment. Please use email and password.');
-                }}
-              >
-                <img src="https://www.google.com/favicon.ico" style={{ width: '14px', height: '14px', marginRight: '4px' }} alt="Google icon" /> 
-                Continue with Google
-              </button>
+
             </form>
           ) : (
             <form onSubmit={handleRegisterSubmit} id="auth-register">

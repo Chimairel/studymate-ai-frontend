@@ -19,13 +19,13 @@ export const DashboardHome: React.FC = () => {
   // Calculate dynamic stats
   const totalEssays = essays.length;
   const gradedEssays = essays.filter(e => e.score > 0);
-  const avgScore = gradedEssays.length > 0 
+  const avgScore = gradedEssays.length > 0
     ? Math.round(gradedEssays.reduce((sum, e) => sum + e.score, 0) / gradedEssays.length)
     : 0;
-  
+
   const totalWords = essays.reduce((sum, e) => sum + (e.wordCount || 0), 0);
-  const wordsFormatted = totalWords >= 1000 
-    ? (totalWords / 1000).toFixed(1) + 'k' 
+  const wordsFormatted = totalWords >= 1000
+    ? (totalWords / 1000).toFixed(1) + 'k'
     : totalWords.toString();
 
   const now = new Date();
@@ -60,29 +60,29 @@ export const DashboardHome: React.FC = () => {
       <div className="content-body">
         {/* KPI metrics */}
         <div className="stats-grid">
-          <StatCard 
-            label="Essays Written" 
-            value={totalEssays} 
-            changeText={essaysThisMonth > 0 ? `${essaysThisMonth} this month` : "No essays this month"} 
-            changeType={essaysThisMonth > 0 ? "up" : "neutral"} 
+          <StatCard
+            label="Essays Written"
+            value={totalEssays}
+            changeText={essaysThisMonth > 0 ? `${essaysThisMonth} this month` : "No essays this month"}
+            changeType={essaysThisMonth > 0 ? "up" : "neutral"}
           />
-          <StatCard 
-            label="Avg. Score" 
-            value={avgScore || '--'} 
-            changeText={avgScore > 0 ? "+6 vs last month" : "No grades yet"} 
-            changeType={avgScore > 0 ? "up" : "neutral"} 
+          <StatCard
+            label="Avg. Score"
+            value={avgScore || '--'}
+            changeText={avgScore > 0 ? "Current average" : "No grades yet"}
+            changeType={avgScore > 0 ? "up" : "neutral"}
           />
-          <StatCard 
-            label="Words Written" 
-            value={wordsFormatted} 
-            changeText="This semester" 
-            changeType="neutral" 
+          <StatCard
+            label="Words Written"
+            value={wordsFormatted}
+            changeText="This semester"
+            changeType="neutral"
           />
-          <StatCard 
-            label="Coach Sessions" 
-            value={totalEssays > 0 ? totalEssays * 3 + 2 : 0} 
-            changeText={totalEssays > 0 ? "Active learner ✦" : "No sessions yet"} 
-            changeType={totalEssays > 0 ? "up" : "neutral"} 
+          <StatCard
+            label="Coach Sessions"
+            value={totalEssays}
+            changeText={totalEssays > 0 ? "1 per essay" : "No sessions yet"}
+            changeType={totalEssays > 0 ? "neutral" : "neutral"}
           />
         </div>
 
@@ -103,10 +103,10 @@ export const DashboardHome: React.FC = () => {
                 </div>
               ) : (
                 essays.slice(0, 4).map((essay) => (
-                  <EssayListItem 
-                    key={essay.id} 
-                    essay={essay} 
-                    onClick={() => handleEssayClick(essay)} 
+                  <EssayListItem
+                    key={essay.id}
+                    essay={essay}
+                    onClick={() => handleEssayClick(essay)}
                   />
                 ))
               )}
@@ -122,7 +122,7 @@ export const DashboardHome: React.FC = () => {
               {latestGradedEssay && latestGradedEssay.score > 0 ? (
                 <div className="score-ring-container">
                   <ScoreRing score={latestGradedEssay.score} size={120} />
-                  
+
                   <div className="sub-scores" style={{ width: '220px', marginTop: '16px' }}>
                     <div className="sub-score-row">
                       <span className="sub-score-label">Structure</span>
@@ -198,20 +198,20 @@ export const DashboardHome: React.FC = () => {
           <Card>
             <Card.Header>
               <Card.Title>Writing Streak</Card.Title>
-              <Badge variant={(user?.streak || 0) > 0 ? "gold" : "neutral"} style={{ opacity: (user?.streak || 0) > 0 ? 1 : 0.6 }}>
+              <Badge variant={(user?.streak || 0) > 0 ? "gold" : "muted"} style={{ opacity: (user?.streak || 0) > 0 ? 1 : 0.6 }}>
                 🔥 {user?.streak || 0} {(user?.streak || 0) === 1 ? 'Day' : 'Days'}
               </Badge>
             </Card.Header>
             <Card.Body>
               <div style={{ display: 'flex', gap: '6px', marginBottom: '16px' }}>
                 {[...Array(7)].map((_, i) => (
-                  <div 
-                    key={i} 
-                    style={{ 
-                      flex: 1, 
-                      background: i < Math.min(user?.streak || 0, 7) ? 'var(--green)' : 'var(--border)', 
-                      borderRadius: '4px', 
-                      height: '8px' 
+                  <div
+                    key={i}
+                    style={{
+                      flex: 1,
+                      background: i < Math.min(user?.streak || 0, 7) ? 'var(--green)' : 'var(--border)',
+                      borderRadius: '4px',
+                      height: '8px'
                     }}
                   ></div>
                 ))}
@@ -229,17 +229,17 @@ export const DashboardHome: React.FC = () => {
                 {totalEssays >= 1 ? (
                   <Badge variant="gold">🏆 First Essay</Badge>
                 ) : (
-                  <Badge variant="neutral" style={{ opacity: 0.5 }}>🏆 First Essay (Locked)</Badge>
+                  <Badge variant="muted" style={{ opacity: 0.5 }}>🏆 First Essay (Locked)</Badge>
                 )}
                 {totalEssays >= 5 ? (
                   <Badge variant="green">📚 5 Essays Written</Badge>
                 ) : (
-                  <Badge variant="neutral" style={{ opacity: 0.5 }}>📚 5 Essays (Locked)</Badge>
+                  <Badge variant="muted" style={{ opacity: 0.5 }}>📚 5 Essays (Locked)</Badge>
                 )}
                 {totalWords >= 10000 ? (
                   <Badge variant="blue">✏️ 10k Words</Badge>
                 ) : (
-                  <Badge variant="neutral" style={{ opacity: 0.5 }}>✏️ 10k Words (Locked)</Badge>
+                  <Badge variant="muted" style={{ opacity: 0.5 }}>✏️ 10k Words (Locked)</Badge>
                 )}
               </div>
             </Card.Body>
