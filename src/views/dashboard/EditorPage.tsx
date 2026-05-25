@@ -5,20 +5,57 @@ import { useEssay } from '../../hooks/useEssay';
 import { useCoach } from '../../hooks/useCoach';
 import EditorPane from '../../components/editor/EditorPane';
 import CoachPane from '../../components/editor/CoachPane';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 type EssayType = 'Argumentative' | 'Expository' | 'Analytical' | 'Narrative';
 
 export const EditorPage: React.FC = () => {
-  const { currentEssay, addEssay, updateEssay } = useEssay();
+  const { essays, currentEssay, setCurrentEssay, addEssay, updateEssay, isLoading } = useEssay();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const queryId = searchParams.get('id');
   
   // Local editor state
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [type, setType] = useState<EssayType>('Argumentative');
   const [activeTab, setActiveTab] = useState<'feedback' | 'chat' | 'score'>('feedback');
+  const [isLocalAnalyzing, setIsLocalAnalyzing] = useState(false);
+  
+  // Hook for coach interactions bound to currentEssay?.id
+  const { 
+    chatHistory, 
+    isAnalyzing, 
+    isTyping, 
+    analyze, 
+    sendMessage,
+    summarize
+  } = useCoach(currentEssay?.id);
+  const loading = isAnalyzing || isLocalAnalyzing;
   
   // Ref to track if we need to sync when currentEssay loads
   const currentEssayIdRef = useRef<string | undefined>(undefined);
+
+  // Sync URL query 'id' with currentEssay
+  useEffect(() => {
+    if (isLoading || loading) return;
+
+    if (queryId) {
+      if (!currentEssay || currentEssay.id !== queryId) {
+        const matched = essays.find(e => e.id === queryId);
+        if (matched) {
+          setCurrentEssay(matched);
+        } else if (essays.length > 0) {
+          // Only clear the URL if essays have loaded and the ID is truly not found
+          router.replace('/dashboard/editor');
+        }
+      }
+    } else {
+      if (currentEssay) {
+        setCurrentEssay(null);
+      }
+    }
+  }, [queryId, essays, isLoading, loading, currentEssay, setCurrentEssay, router]);
 
   // Sync with currentEssay when it changes
   useEffect(() => {
@@ -39,18 +76,64 @@ export const EditorPage: React.FC = () => {
     }
   }, [currentEssay]);
 
-  // Hook for coach interactions bound to currentEssay?.id
-  const { 
-    chatHistory, 
-    isAnalyzing, 
-    isTyping, 
-    analyze, 
-    sendMessage 
-  } = useCoach(currentEssay?.id);
+  // Recover unsaved draft on mount (only when creating a new essay)
+  useEffect(() => {
+    if (!queryId && !currentEssay) {
+      const savedTitle = localStorage.getItem('studymate_draft_title');
+      const savedContent = localStorage.getItem('studymate_draft_content');
+      const savedType = localStorage.getItem('studymate_draft_type');
+      
+      if (savedTitle || savedContent) {
+        setTitle(savedTitle || '');
+        setContent(savedContent || '');
+        if (savedType) setType(savedType as EssayType);
+      }
+    }
+  }, [queryId, currentEssay]);
 
-  // Character and Word counters
-  const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
-  const charCount = content.length;
+  // Save unsaved draft changes to localStorage (only when creating a new essay)
+  useEffect(() => {
+    if (!currentEssay && !queryId) {
+      if (title || content) {
+        localStorage.setItem('studymate_draft_title', title);
+        localStorage.setItem('studymate_draft_content', content);
+        localStorage.setItem('studymate_draft_type', type);
+      } else {
+        localStorage.removeItem('studymate_draft_title');
+        localStorage.removeItem('studymate_draft_content');
+        localStorage.removeItem('studymate_draft_type');
+      }
+    }
+  }, [title, content, type, currentEssay, queryId]);
+
+  // Hook for coach interactions bound to currentEssay?.id
+
+  if (isLoading && queryId) {
+    return (
+      <div className="main-content" style={{ padding: 0, overflow: 'hidden', height: '100%' }}>
+        <div className="flex-center" style={{ height: '100%', flexDirection: 'column', background: 'var(--paper)', gap: '16px' }}>
+          <div className="spinner" style={{ borderTopColor: 'var(--accent)' }}></div>
+          <div style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: '22px', color: 'var(--ink)' }}>
+            Loading your essay...
+          </div>
+          <div style={{ fontSize: '13px', color: 'var(--muted)' }}>
+            Retrieving your coach feedback and active drafts ✍️
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Utility to strip HTML tags for accurate word/character count
+  const getPlainText = (html: string) => {
+    if (typeof window === 'undefined') return html;
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return doc.body.textContent || '';
+  };
+
+  const plainText = getPlainText(content);
+  const wordCount = plainText.trim().split(/\s+/).filter(Boolean).length;
+  const charCount = plainText.length;
 
   const handleAnalyze = async () => {
     if (!title.trim()) {
@@ -64,16 +147,24 @@ export const EditorPage: React.FC = () => {
     }
 
     if (!currentEssay) {
-      // 1. Create the essay first if it doesn't exist
-      const created = await addEssay(title, content, type);
-      if (!created) {
-        alert('Failed to save your new essay.');
-        return;
-      }
-      
-      // Wait for React to process state updates, then analyze
       setIsLocalAnalyzing(true);
       try {
+        // 1. Create the essay first if it doesn't exist
+        const created = await addEssay(title, content, type);
+        if (!created) {
+          alert('Failed to save your new essay. Please check your connection and click "Save & Analyze" again.');
+          setIsLocalAnalyzing(false);
+          return;
+        }
+        
+        // Clear unsaved draft from localStorage
+        localStorage.removeItem('studymate_draft_title');
+        localStorage.removeItem('studymate_draft_content');
+        localStorage.removeItem('studymate_draft_type');
+        
+        // Update URL to match the newly created essay ID
+        router.replace(`/dashboard/editor?id=${created.id}`);
+        
         const { coachService } = await import('../../services/coachService');
         const res = await coachService.analyzeEssay(title, content, type, created.id);
         await updateEssay(created.id, {
@@ -89,6 +180,7 @@ export const EditorPage: React.FC = () => {
         setActiveTab('feedback');
       } catch (e) {
         console.error('Initial analysis failed', e);
+        alert('AI Coach analysis failed or was interrupted. Please click "Save & Analyze" again to retry.');
       } finally {
         setIsLocalAnalyzing(false);
       }
@@ -99,9 +191,31 @@ export const EditorPage: React.FC = () => {
     }
   };
 
-  // State to support analysis loading when creating a new essay
-  const [isLocalAnalyzing, setIsLocalAnalyzing] = useState(false);
-  const loading = isAnalyzing || isLocalAnalyzing;
+  const handleSummarize = async () => {
+    if (!content.trim()) {
+      alert('Please write some content first to summarize.');
+      return;
+    }
+
+    let activeEssay = currentEssay;
+
+    if (!activeEssay) {
+      if (!title.trim()) {
+        alert('Please enter a title for your essay first.');
+        return;
+      }
+      
+      // Auto-save the essay first
+      activeEssay = await addEssay(title, content, type);
+      if (!activeEssay) {
+        alert('Failed to save your new essay.');
+        return;
+      }
+    }
+
+    setActiveTab('chat');
+    await summarize(content, type, activeEssay.id);
+  };
 
   // Handle applying a suggested correction
   const handleApplySuggestion = async (original: string, suggestion: string) => {
@@ -160,6 +274,7 @@ export const EditorPage: React.FC = () => {
           onContentChange={setContent}
           onTypeChange={setType}
           onAnalyze={handleAnalyze}
+          onSummarize={handleSummarize}
         />
 
         {/* Right pane: coach recommendations & chat */}

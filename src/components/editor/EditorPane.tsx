@@ -15,6 +15,7 @@ interface EditorPaneProps {
   onContentChange: (content: string) => void;
   onTypeChange: (type: 'Argumentative' | 'Expository' | 'Analytical' | 'Narrative') => void;
   onAnalyze: () => void;
+  onSummarize: () => void;
 }
 
 export const EditorPane: React.FC<EditorPaneProps> = ({
@@ -29,40 +30,106 @@ export const EditorPane: React.FC<EditorPaneProps> = ({
   onContentChange,
   onTypeChange,
   onAnalyze,
+  onSummarize,
 }) => {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
+  const lastContentRef = useRef<string>(content);
 
-  const insertText = (before: string, after: string = '') => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
+  const [activeStyles, setActiveStyles] = React.useState({
+    bold: false,
+    italic: false,
+    underline: false,
+  });
 
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selected = textarea.value.substring(start, end);
-    const replacement = before + (selected || 'text') + after;
+  // Track cursor position styling states
+  React.useEffect(() => {
+    const handleSelectionChange = () => {
+      setActiveStyles({
+        bold: document.queryCommandState('bold'),
+        italic: document.queryCommandState('italic'),
+        underline: document.queryCommandState('underline'),
+      });
+    };
 
-    onContentChange(
-      textarea.value.substring(0, start) +
-      replacement +
-      textarea.value.substring(end)
-    );
+    document.addEventListener('selectionchange', handleSelectionChange);
+    return () => {
+      document.removeEventListener('selectionchange', handleSelectionChange);
+    };
+  }, []);
 
-    // Focus back and restore selection
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + before.length, start + before.length + (selected || 'text').length);
-    }, 50);
+  // Sync content from prop ONLY when changed externally (i.e. not by user typing)
+  React.useEffect(() => {
+    if (editorRef.current) {
+      if (content !== editorRef.current.innerHTML) {
+        if (content !== lastContentRef.current) {
+          editorRef.current.innerHTML = content;
+          lastContentRef.current = content;
+        }
+      }
+    }
+  }, [content]);
+
+  const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
+    const newHtml = e.currentTarget.innerHTML;
+    lastContentRef.current = newHtml;
+    onContentChange(newHtml);
   };
 
-  const handlePaste = async () => {
+  const executeCommand = (command: string, value: string = '') => {
+    document.execCommand(command, false, value);
+    if (editorRef.current) {
+      const newHtml = editorRef.current.innerHTML;
+      lastContentRef.current = newHtml;
+      onContentChange(newHtml);
+    }
+  };
+
+  const handlePasteEvent = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const text = e.clipboardData.getData('text/plain');
+    document.execCommand('insertText', false, text);
+  };
+
+  const handlePasteButton = async () => {
     try {
       const text = await navigator.clipboard.readText();
       if (text) {
-        insertText('', text);
+        executeCommand('insertText', text);
       }
     } catch (e) {
       console.warn('Clipboard read access denied.');
     }
+  };
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== 'text/plain' && !file.name.endsWith('.txt')) {
+      alert('Only .txt files are supported.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result;
+      if (typeof text === 'string') {
+        const formattedText = text
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/\r?\n/g, '<br>');
+        
+        onContentChange(formattedText);
+        if (editorRef.current) {
+          editorRef.current.innerHTML = formattedText;
+        }
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
   };
 
   return (
@@ -70,70 +137,78 @@ export const EditorPane: React.FC<EditorPaneProps> = ({
       {/* Toolbar */}
       <div className="editor-toolbar">
         <button 
-          className="toolbar-btn" 
-          onClick={() => insertText('**', '**')} 
+          className={`toolbar-btn ${activeStyles.bold ? 'active' : ''}`} 
+          onClick={() => executeCommand('bold')} 
+          onMouseDown={(e) => e.preventDefault()}
           title="Bold"
           type="button"
         >
           <strong>B</strong>
         </button>
         <button 
-          className="toolbar-btn" 
-          onClick={() => insertText('*', '*')} 
+          className={`toolbar-btn ${activeStyles.italic ? 'active' : ''}`} 
+          onClick={() => executeCommand('italic')} 
+          onMouseDown={(e) => e.preventDefault()}
           title="Italic"
           type="button"
         >
           <em>I</em>
         </button>
         <button 
-          className="toolbar-btn" 
-          onClick={() => insertText('<u>', '</u>')} 
+          className={`toolbar-btn ${activeStyles.underline ? 'active' : ''}`} 
+          onClick={() => executeCommand('underline')} 
+          onMouseDown={(e) => e.preventDefault()}
           title="Underline"
           type="button"
         >
           <u>U</u>
         </button>
+        
         <div className="toolbar-sep"></div>
         <button 
           className="toolbar-btn" 
-          onClick={() => insertText('# ', '\n')} 
-          title="Header 1"
-          type="button"
-        >
-          H1
-        </button>
-        <button 
-          className="toolbar-btn" 
-          onClick={() => insertText('## ', '\n')} 
-          title="Header 2"
-          type="button"
-        >
-          H2
-        </button>
-        <button 
-          className="toolbar-btn" 
-          onClick={() => insertText('\n\n')} 
+          onClick={() => executeCommand('insertParagraph')} 
+          onMouseDown={(e) => e.preventDefault()}
           title="Paragraph Break"
           type="button"
         >
           ¶
         </button>
         <div className="toolbar-sep"></div>
+        <input 
+          type="file" 
+          accept=".txt" 
+          ref={fileInputRef} 
+          onChange={handleFileUpload} 
+          style={{ display: 'none' }} 
+        />
         <button 
           className="toolbar-btn" 
-          onClick={() => insertText('[', '](url)')} 
-          title="Insert Link"
+          onClick={() => fileInputRef.current?.click()} 
+          onMouseDown={(e) => e.preventDefault()}
+          title="Upload Text File (.txt)"
           type="button"
         >
-          🔗
+          📤 Upload
         </button>
         <button 
           className="toolbar-btn" 
-          onClick={handlePaste} 
+          onClick={handlePasteButton} 
+          onMouseDown={(e) => e.preventDefault()}
           title="Paste from Clipboard"
           type="button"
         >
           📋 Paste
+        </button>
+        <button 
+          className="toolbar-btn" 
+          onClick={onSummarize} 
+          onMouseDown={(e) => e.preventDefault()}
+          title="Summarize Essay"
+          type="button"
+          style={{ background: 'var(--accent-light)', color: 'var(--accent)', fontWeight: '600' }}
+        >
+          ✨ Summarize
         </button>
         
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -176,12 +251,20 @@ export const EditorPane: React.FC<EditorPaneProps> = ({
 
       {/* Textarea Area */}
       <div className="editor-area">
-        <textarea 
-          ref={textareaRef}
+        <div 
+          ref={editorRef}
           className="editor-textarea"
-          value={content}
-          onChange={(e) => onContentChange(e.target.value)}
-          placeholder="Begin writing your essay here. Your AI coach will provide feedback as you write..."
+          contentEditable
+          onInput={handleInput}
+          onPaste={handlePasteEvent}
+          data-placeholder="Begin writing your essay here. Your AI coach will provide feedback as you write..."
+          style={{ 
+            minHeight: '400px', 
+            outline: 'none', 
+            overflowY: 'auto',
+            wordBreak: 'break-word',
+            whiteSpace: 'pre-wrap'
+          }}
         />
       </div>
 

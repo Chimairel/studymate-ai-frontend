@@ -8,7 +8,7 @@ import { statsService, DashboardStats } from '../../services/statsService';
 
 export const ProfilePage: React.FC = () => {
   const { user, updateUser } = useAuth();
-  const { essays } = useEssay();
+  const { essays, isLoading: essaysLoading } = useEssay();
 
   // Initial Form State
   const initialFirstName = user?.firstName || user?.name?.split(' ')[0] || '';
@@ -21,12 +21,7 @@ export const ProfilePage: React.FC = () => {
   const [bio, setBio] = useState(user?.bio || '');
 
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
-
-  useEffect(() => {
-    statsService.getDashboard().then(data => {
-      if (data) setDashboardStats(data);
-    });
-  }, []);
+  const [statsLoading, setStatsLoading] = useState(true);
 
   // Preference State
   const [realTimeFeedback, setRealTimeFeedback] = useState(
@@ -47,6 +42,108 @@ export const ProfilePage: React.FC = () => {
 
   // Status Notification
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+  useEffect(() => {
+    setStatsLoading(true);
+    statsService.getDashboard().then(data => {
+      if (data) setDashboardStats(data);
+    }).catch(err => {
+      console.error('Failed to load dashboard stats', err);
+    }).finally(() => {
+      setStatsLoading(false);
+    });
+  }, []);
+
+  const isDataLoading = statsLoading || essaysLoading;
+
+  if (isDataLoading) {
+    return (
+      <div>
+        <div className="content-header">
+          <div>
+            <div className="skeleton" style={{ height: '32px', width: '150px', marginBottom: '8px' }}></div>
+            <div className="skeleton" style={{ height: '18px', width: '250px' }}></div>
+          </div>
+          <div className="skeleton" style={{ height: '40px', width: '130px', borderRadius: '8px' }}></div>
+        </div>
+
+        <div className="content-body">
+          {/* Profile Header Card Skeleton */}
+          <div className="profile-header-card" style={{ background: 'var(--sidebar)', opacity: 0.85 }}>
+            <div className="skeleton" style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(255,255,255,0.15)' }}></div>
+            <div style={{ flex: 1 }}>
+              <div className="skeleton" style={{ height: '28px', width: '200px', marginBottom: '10px', background: 'rgba(255,255,255,0.15)' }}></div>
+              <div className="skeleton" style={{ height: '16px', width: '160px', marginBottom: '16px', background: 'rgba(255,255,255,0.15)' }}></div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <div className="skeleton" style={{ height: '24px', width: '100px', borderRadius: '20px', background: 'rgba(255,255,255,0.15)' }}></div>
+                <div className="skeleton" style={{ height: '24px', width: '80px', borderRadius: '20px', background: 'rgba(255,255,255,0.15)' }}></div>
+                <div className="skeleton" style={{ height: '24px', width: '140px', borderRadius: '20px', background: 'rgba(255,255,255,0.15)' }}></div>
+              </div>
+            </div>
+            <div className="profile-stats">
+              {[1, 2, 3].map((i) => (
+                <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                  <div className="skeleton" style={{ height: '28px', width: '40px', background: 'rgba(255,255,255,0.15)' }}></div>
+                  <div className="skeleton" style={{ height: '14px', width: '50px', background: 'rgba(255,255,255,0.15)' }}></div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid-equal">
+            {/* Personal Info Skeleton */}
+            <div className="card card-padded" style={{ background: 'white' }}>
+              <div className="skeleton" style={{ height: '18px', width: '180px', marginBottom: '24px' }}></div>
+              
+              <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
+                <div style={{ flex: 1 }}>
+                  <div className="skeleton" style={{ height: '14px', width: '70px', marginBottom: '8px' }}></div>
+                  <div className="skeleton" style={{ height: '38px', width: '100%', borderRadius: '8px' }}></div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div className="skeleton" style={{ height: '14px', width: '70px', marginBottom: '8px' }}></div>
+                  <div className="skeleton" style={{ height: '38px', width: '100%', borderRadius: '8px' }}></div>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <div className="skeleton" style={{ height: '14px', width: '40px', marginBottom: '8px' }}></div>
+                <div className="skeleton" style={{ height: '38px', width: '100%', borderRadius: '8px' }}></div>
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <div className="skeleton" style={{ height: '14px', width: '40px', marginBottom: '8px' }}></div>
+                <div className="skeleton" style={{ height: '38px', width: '100%', borderRadius: '8px' }}></div>
+              </div>
+
+              <div>
+                <div className="skeleton" style={{ height: '14px', width: '30px', marginBottom: '8px' }}></div>
+                <div className="skeleton" style={{ height: '80px', width: '100%', borderRadius: '8px' }}></div>
+              </div>
+            </div>
+
+            {/* Preferences Skeleton */}
+            <div className="card card-padded" style={{ background: 'white' }}>
+              <div className="skeleton" style={{ height: '18px', width: '110px', marginBottom: '24px' }}></div>
+
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid var(--border)' }}>
+                  <div>
+                    <div className="skeleton" style={{ height: '16px', width: '120px', marginBottom: '6px' }}></div>
+                    <div className="skeleton" style={{ height: '12px', width: '180px' }}></div>
+                  </div>
+                  <div className="skeleton" style={{ height: '24px', width: '42px', borderRadius: '12px' }}></div>
+                </div>
+              ))}
+
+              <div className="skeleton" style={{ height: '18px', width: '150px', marginTop: '24px', marginBottom: '12px' }}></div>
+              <div className="skeleton" style={{ height: '38px', width: '100%', borderRadius: '8px' }}></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Calculate dynamic stats
   const totalEssays = dashboardStats?.totalEssays ?? essays.length;

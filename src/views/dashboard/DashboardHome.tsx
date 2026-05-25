@@ -14,7 +14,106 @@ import Link from 'next/link';
 export const DashboardHome: React.FC = () => {
   const router = useRouter();
   const { user } = useAuth();
-  const { essays, setCurrentEssay } = useEssay();
+  const { essays, setCurrentEssay, isLoading } = useEssay();
+  
+  const [activeTab, setActiveTab] = React.useState<'recent' | 'favorites'>('recent');
+  const [favoriteIds, setFavoriteIds] = React.useState<string[]>([]);
+  
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('studymate_favorite_essays');
+      if (stored) {
+        try {
+          setFavoriteIds(JSON.parse(stored));
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, []);
+
+  const favoriteEssays = essays.filter(e => favoriteIds.includes(e.id));
+
+  if (isLoading) {
+    return (
+      <div>
+        <div className="content-header">
+          <div>
+            <div className="skeleton" style={{ height: '32px', width: '250px', marginBottom: '8px' }}></div>
+            <div className="skeleton" style={{ height: '18px', width: '380px' }}></div>
+          </div>
+          <div className="skeleton" style={{ height: '40px', width: '130px', borderRadius: '8px' }}></div>
+        </div>
+
+        <div className="content-body">
+          {/* KPI metrics skeleton */}
+          <div className="stats-grid" style={{ marginBottom: '24px' }}>
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="skeleton" style={{ height: '120px', borderRadius: '16px' }}></div>
+            ))}
+          </div>
+
+          <div className="grid-2">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {/* Overview Skeleton */}
+              <Card>
+                <Card.Header style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <div className="skeleton" style={{ height: '20px', width: '120px' }}></div>
+                </Card.Header>
+                <Card.Body style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+                  <div className="skeleton" style={{ height: '120px', width: '120px', borderRadius: '50%' }}></div>
+                  <div style={{ flex: 1 }}>
+                    <div className="skeleton" style={{ height: '20px', width: '100px', marginBottom: '12px' }}></div>
+                    <div className="skeleton" style={{ height: '14px', width: '100%', marginBottom: '8px' }}></div>
+                    <div className="skeleton" style={{ height: '14px', width: '80%' }}></div>
+                  </div>
+                </Card.Body>
+              </Card>
+
+              {/* Recent Drafts Skeleton */}
+              <Card>
+                <Card.Header style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <div className="skeleton" style={{ height: '20px', width: '140px' }}></div>
+                  <div className="skeleton" style={{ height: '16px', width: '70px' }}></div>
+                </Card.Header>
+                <Card.Body>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="skeleton" style={{ height: '70px', borderRadius: '8px' }}></div>
+                    ))}
+                  </div>
+                </Card.Body>
+              </Card>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {/* Coach Tips Skeleton */}
+              <Card>
+                <Card.Header style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <div className="skeleton" style={{ height: '20px', width: '110px' }}></div>
+                </Card.Header>
+                <Card.Body>
+                  <div className="skeleton" style={{ height: '90px', borderRadius: '8px', marginBottom: '12px' }}></div>
+                  <div className="skeleton" style={{ height: '90px', borderRadius: '8px' }}></div>
+                </Card.Body>
+              </Card>
+
+              {/* Writing Streak Skeleton */}
+              <Card>
+                <Card.Header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div className="skeleton" style={{ height: '20px', width: '130px' }}></div>
+                  <div className="skeleton" style={{ height: '24px', width: '60px', borderRadius: '12px' }}></div>
+                </Card.Header>
+                <Card.Body>
+                  <div className="skeleton" style={{ height: '80px', borderRadius: '8px' }}></div>
+                </Card.Body>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Calculate dynamic stats
   const totalEssays = essays.length;
@@ -40,7 +139,7 @@ export const DashboardHome: React.FC = () => {
 
   const handleEssayClick = (essay: any) => {
     setCurrentEssay(essay);
-    router.push('/dashboard/editor');
+    router.push(`/dashboard/editor?id=${essay.id}`);
   };
 
   return (
@@ -90,25 +189,70 @@ export const DashboardHome: React.FC = () => {
         <div className="grid-2">
           {/* Recent Essays */}
           <Card>
-            <Card.Header>
-              <Card.Title>Recent Essays</Card.Title>
+            <Card.Header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '18px' }}>
+                <span 
+                  onClick={() => setActiveTab('recent')}
+                  style={{
+                    fontSize: '14.5px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    color: activeTab === 'recent' ? 'var(--ink)' : 'var(--muted)',
+                    borderBottom: activeTab === 'recent' ? '2.5px solid var(--accent)' : '2.5px solid transparent',
+                    paddingBottom: '6px',
+                    transition: 'all 0.15s'
+                  }}
+                >
+                  Recent Essays
+                </span>
+                <span 
+                  onClick={() => setActiveTab('favorites')}
+                  style={{
+                    fontSize: '14.5px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    color: activeTab === 'favorites' ? 'var(--ink)' : 'var(--muted)',
+                    borderBottom: activeTab === 'favorites' ? '2.5px solid var(--accent)' : '2.5px solid transparent',
+                    paddingBottom: '6px',
+                    transition: 'all 0.15s'
+                  }}
+                >
+                  Favorites
+                </span>
+              </div>
               <Link href="/dashboard/essays" className="btn btn-ghost btn-sm" style={{ textDecoration: 'none' }}>
                 View All
               </Link>
             </Card.Header>
             <Card.Body style={{ paddingBottom: 0 }}>
-              {essays.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '36px 12px', color: 'var(--muted)' }}>
-                  <p style={{ fontSize: '13.5px' }}>No essays written yet. Get started by clicking "+ New Essay"!</p>
-                </div>
+              {activeTab === 'recent' ? (
+                essays.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '36px 12px', color: 'var(--muted)' }}>
+                    <p style={{ fontSize: '13.5px' }}>No essays written yet. Get started by clicking "+ New Essay"!</p>
+                  </div>
+                ) : (
+                  essays.slice(0, 4).map((essay) => (
+                    <EssayListItem
+                      key={essay.id}
+                      essay={essay}
+                      onClick={() => handleEssayClick(essay)}
+                    />
+                  ))
+                )
               ) : (
-                essays.slice(0, 4).map((essay) => (
-                  <EssayListItem
-                    key={essay.id}
-                    essay={essay}
-                    onClick={() => handleEssayClick(essay)}
-                  />
-                ))
+                favoriteEssays.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '36px 12px', color: 'var(--muted)' }}>
+                    <p style={{ fontSize: '13.5px' }}>No favorite essays yet. Mark some essays as favorites in the My Essays tab!</p>
+                  </div>
+                ) : (
+                  favoriteEssays.slice(0, 4).map((essay) => (
+                    <EssayListItem
+                      key={essay.id}
+                      essay={essay}
+                      onClick={() => handleEssayClick(essay)}
+                    />
+                  ))
+                )
               )}
             </Card.Body>
           </Card>

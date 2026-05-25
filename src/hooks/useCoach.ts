@@ -46,11 +46,11 @@ export function useCoach(essayId: string | undefined) {
 
   const analyze = useCallback(async (title: string, content: string, type: 'Argumentative' | 'Expository' | 'Analytical' | 'Narrative') => {
     if (!essayId) return null;
-    
+
     setIsAnalyzing(true);
     try {
       const result = await coachService.analyzeEssay(title, content, type, essayId);
-      
+
       const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
       const charCount = content.length;
 
@@ -145,12 +145,59 @@ export function useCoach(essayId: string | undefined) {
     localStorage.setItem(`${CHAT_STORAGE_PREFIX}${essayId}`, JSON.stringify(defaultWelcome));
   }, [essayId]);
 
+  const summarize = useCallback(async (currentContent: string, currentType: 'Argumentative' | 'Expository' | 'Analytical' | 'Narrative', customId?: string) => {
+    const activeId = customId || essayId;
+    if (!activeId || !currentContent.trim()) return;
+
+    const userMsg: ChatMessage = {
+      id: `user-${Date.now()}`,
+      sender: 'user',
+      text: 'Please summarize my essay.',
+      timestamp: new Date().toISOString()
+    };
+
+    let updatedHistory: ChatMessage[] = [];
+    setChatHistory(prev => {
+      updatedHistory = [...prev, userMsg];
+      localStorage.setItem(`${CHAT_STORAGE_PREFIX}${activeId}`, JSON.stringify(updatedHistory));
+      return updatedHistory;
+    });
+
+    setIsTyping(true);
+    try {
+      const coachText = await coachService.getChatReply(
+        "Please provide a concise and direct summary of this essay draft. Write the summary from the exact same perspective, voice, and tone as the essay itself (e.g., do not refer to the essay in the third-person like 'The essay argues...', 'The text discusses...', or 'The author writes...'). Do not include any conversational greeting, meta-feedback, coaching remarks, or conversational transitions. Provide ONLY the summary itself in one or two short paragraphs. Do not add any 'Key Elements' list, bullet points, or extra headings.",
+        updatedHistory,
+        currentContent,
+        currentType
+      );
+
+      const coachMsg: ChatMessage = {
+        id: `coach-${Date.now()}`,
+        sender: 'coach',
+        text: coachText,
+        timestamp: new Date().toISOString()
+      };
+
+      setChatHistory(prev => {
+        const next = [...prev, coachMsg];
+        localStorage.setItem(`${CHAT_STORAGE_PREFIX}${activeId}`, JSON.stringify(next));
+        return next;
+      });
+    } catch (e) {
+      console.error('Failed to get essay summary', e);
+    } finally {
+      setIsTyping(false);
+    }
+  }, [essayId]);
+
   return {
     chatHistory,
     isAnalyzing,
     isTyping,
     analyze,
     sendMessage,
-    clearChat
+    clearChat,
+    summarize
   };
 }

@@ -40,6 +40,27 @@ export const ChatTab: React.FC<ChatTabProps> = ({
     }
   };
 
+  const formatMessageText = (text: string) => {
+    if (!text) return '';
+    
+    // Escape basic HTML
+    let html = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    
+    // Replace **bold** with <strong>bold</strong>
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    // Replace *italic* with <em>italic</em>
+    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    
+    // Convert newlines to <br>
+    html = html.replace(/\n/g, '<br>');
+    
+    return html;
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* Messages area */}
@@ -50,9 +71,10 @@ export const ChatTab: React.FC<ChatTabProps> = ({
             return (
               <div key={msg.id} className={`chat-msg ${isCoach ? 'coach' : 'user'}`}>
                 {isCoach && <div className="chat-sender">Essay Coach</div>}
-                <div className="chat-bubble">
-                  {msg.text}
-                </div>
+                <div 
+                  className="chat-bubble"
+                  dangerouslySetInnerHTML={{ __html: formatMessageText(msg.text) }}
+                />
               </div>
             );
           })}

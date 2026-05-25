@@ -7,7 +7,7 @@ interface CardProps {
 }
 
 export const Card: React.FC<CardProps> & {
-  Header: React.FC<{ className?: string; children: React.ReactNode }>;
+  Header: React.FC<{ className?: string; style?: React.CSSProperties; children: React.ReactNode }>;
   Title: React.FC<{ className?: string; children: React.ReactNode }>;
   Body: React.FC<{ className?: string; style?: React.CSSProperties; children: React.ReactNode }>;
 } = ({
@@ -19,11 +19,12 @@ export const Card: React.FC<CardProps> & {
   return <div className={combinedClasses}>{children}</div>;
 };
 
-const CardHeader: React.FC<{ className?: string; children: React.ReactNode }> = ({
+const CardHeader: React.FC<{ className?: string; style?: React.CSSProperties; children: React.ReactNode }> = ({
   className = '',
+  style,
   children
 }) => {
-  return <div className={`card-header ${className}`.trim()}>{children}</div>;
+  return <div className={`card-header ${className}`.trim()} style={style}>{children}</div>;
 };
 
 const CardTitle: React.FC<{ className?: string; children: React.ReactNode }> = ({

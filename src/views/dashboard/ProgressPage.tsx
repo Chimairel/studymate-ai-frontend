@@ -9,7 +9,7 @@ import Card from '../../components/ui/Card';
 import { statsService, Achievement, ProgressStats } from '../../services/statsService';
 
 export const ProgressPage: React.FC = () => {
-  const { essays } = useEssay();
+  const { essays, isLoading: essaysLoading } = useEssay();
 
   // Dynamic Skill breakdown averages
   const gradedEssays = essays.filter((e) => e.score > 0);
@@ -17,15 +17,81 @@ export const ProgressPage: React.FC = () => {
 
   const [achievementsList, setAchievementsList] = useState<Achievement[]>([]);
   const [progressStats, setProgressStats] = useState<ProgressStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    statsService.getAchievements().then(data => {
-      if (data) setAchievementsList(data);
-    });
-    statsService.getProgress().then(data => {
-      if (data) setProgressStats(data);
+    setIsLoading(true);
+    Promise.all([
+      statsService.getAchievements(),
+      statsService.getProgress()
+    ]).then(([achievements, progress]) => {
+      if (achievements) setAchievementsList(achievements);
+      if (progress) setProgressStats(progress);
+    }).catch(err => {
+      console.error('Failed to load progress data', err);
+    }).finally(() => {
+      setIsLoading(false);
     });
   }, []);
+
+  if (isLoading || essaysLoading) {
+    return (
+      <div>
+        <div className="content-header">
+          <div>
+            <div className="skeleton" style={{ height: '32px', width: '200px', marginBottom: '8px' }}></div>
+            <div className="skeleton" style={{ height: '18px', width: '320px' }}></div>
+          </div>
+        </div>
+
+        <div className="content-body">
+          <div className="grid-2" style={{ marginBottom: '20px' }}>
+            {/* Chart Skeleton */}
+            <Card>
+              <Card.Header>
+                <div className="skeleton" style={{ height: '20px', width: '120px' }}></div>
+              </Card.Header>
+              <Card.Body>
+                <div className="skeleton" style={{ height: '180px', width: '100%' }}></div>
+              </Card.Body>
+            </Card>
+
+            {/* Skills Skeleton */}
+            <Card>
+              <Card.Header>
+                <div className="skeleton" style={{ height: '20px', width: '140px' }}></div>
+              </Card.Header>
+              <Card.Body>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                      <div className="skeleton" style={{ height: '14px', width: '70px' }}></div>
+                      <div className="skeleton" style={{ height: '12px', flex: 1 }}></div>
+                      <div className="skeleton" style={{ height: '14px', width: '30px' }}></div>
+                    </div>
+                  ))}
+                </div>
+              </Card.Body>
+            </Card>
+          </div>
+
+          {/* Achievements Skeleton */}
+          <Card>
+            <Card.Header>
+              <div className="skeleton" style={{ height: '20px', width: '120px' }}></div>
+            </Card.Header>
+            <Card.Body>
+              <div className="achievement-grid">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="skeleton" style={{ height: '130px', width: '100%', borderRadius: '12px' }}></div>
+                ))}
+              </div>
+            </Card.Body>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   const avgSubscores = {
     structure: totalGraded > 0 ? Math.round(gradedEssays.reduce((sum, e) => sum + (e.subScores?.structure || 0), 0) / totalGraded) : 0,

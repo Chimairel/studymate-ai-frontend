@@ -19,12 +19,13 @@ interface EssayContextType {
 const EssayContext = createContext<EssayContextType | undefined>(undefined);
 
 export function EssayProvider({ children }: { children: ReactNode }) {
-  const { token } = useAuth();
+  const { token, isLoading: authLoading } = useAuth();
   const [essays, setEssays] = useState<Essay[]>([]);
   const [currentEssay, setCurrentEssayState] = useState<Essay | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadEssays = async () => {
+    if (authLoading) return;
     if (!token) {
       setEssays([]);
       setIsLoading(false);
@@ -52,11 +53,13 @@ export function EssayProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    setTimeout(() => {
-      loadEssays();
-    }, 0);
+    if (!authLoading) {
+      setTimeout(() => {
+        loadEssays();
+      }, 0);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [token, authLoading]);
 
   const getEssay = async (id: string): Promise<Essay | null> => {
     return await essayService.getEssayById(id);
