@@ -1667,10 +1667,21 @@ body {
 }
 
 /* ── UTILITIES ── */
-.mt-6 { margin-top: 6px; }
-.mt-12 { margin-top: 12px; }
-.mt-20 { margin-top: 20px; }
-.text-muted { color: var(--muted); }
+.mt-6 {
+    margin-top: 6px;
+}
+
+.mt-12 {
+    margin-top: 12px;
+}
+
+.mt-20 {
+    margin-top: 20px;
+}
+
+.text-muted {
+    color: var(--muted);
+}
 
 .flex-center {
     display: flex;
@@ -1719,7 +1730,9 @@ body {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* Responsive collapse rules matching standard devices */
@@ -1727,7 +1740,7 @@ body {
     .app-shell {
         flex-direction: column;
     }
-    
+
     .sidebar {
         width: 100%;
         height: auto;
@@ -1739,20 +1752,22 @@ body {
         bottom: 0;
         left: 0;
         z-index: 100;
-        box-shadow: 0 -4px 16px rgba(0,0,0,0.1);
+        box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
     }
-    
-    .sidebar-logo, .nav-section-label, .sidebar-footer {
+
+    .sidebar-logo,
+    .nav-section-label,
+    .sidebar-footer {
         display: none !important;
     }
-    
+
     .sidebar-nav {
         flex-direction: row;
         justify-content: space-around;
         width: 100%;
         padding: 0;
     }
-    
+
     .nav-item {
         padding: 8px 12px;
         flex-direction: column;
@@ -1761,49 +1776,51 @@ body {
         border-left: none;
         border-bottom: 2px solid transparent;
     }
-    
+
     .nav-item.active {
         border-left-color: transparent;
         border-bottom-color: var(--accent);
     }
-    
+
     .main-content {
-        padding-bottom: 70px; /* offset bottom nav */
+        padding-bottom: 70px;
+        /* offset bottom nav */
     }
-    
+
     .hero-section {
         grid-template-columns: 1fr;
         padding: 48px 24px;
         gap: 32px;
     }
-    
+
     .features-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
     }
-    
-    .grid-2, .grid-equal {
+
+    .grid-2,
+    .grid-equal {
         grid-template-columns: 1fr;
     }
-    
+
     .auth-container {
         grid-template-columns: 1fr;
         width: 100%;
         min-height: auto;
     }
-    
+
     .auth-left {
         display: none;
     }
-    
+
     .editor-shell {
         flex-direction: column;
         overflow-y: auto;
     }
-    
+
     .coach-panel {
         width: 100%;
         height: auto;
@@ -1813,8 +1830,15 @@ body {
 }
 
 @keyframes skeleton-pulse {
-    0%, 100% { opacity: 0.5; }
-    50% { opacity: 1; }
+
+    0%,
+    100% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 1;
+    }
 }
 
 .skeleton {
