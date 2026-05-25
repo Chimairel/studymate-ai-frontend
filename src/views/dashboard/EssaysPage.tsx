@@ -8,44 +8,32 @@ import Link from 'next/link';
 
 export const EssaysPage: React.FC = () => {
   const router = useRouter();
-  const { essays, setCurrentEssay, deleteEssay, isLoading } = useEssay();
+  const { essays, setCurrentEssay, updateEssay, deleteEssay, isLoading } = useEssay();
   const [filterType, setFilterType] = useState<string>('All Types');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // Favorites state
-  const [favoriteIds, setFavoriteIds] = useState<string[]>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('studymate_favorite_essays');
-      return stored ? JSON.parse(stored) : [];
-    }
-    return [];
-  });
+  // Derived favorites state
+  const favoriteIds = essays.filter(e => e.isFavorite).map(e => e.id);
 
-  const toggleFavorite = (essayId: string, e: React.MouseEvent) => {
+  const toggleFavorite = async (essayId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setFavoriteIds(prev => {
-      const isAlreadyFav = prev.includes(essayId);
-      if (!isAlreadyFav && prev.length >= 3) {
-        alert('You can only have a maximum of 3 favorite essays. Please unfavorite another essay first.');
-        return prev;
-      }
-      const next = isAlreadyFav ? prev.filter(id => id !== essayId) : [...prev, essayId];
-      localStorage.setItem('studymate_favorite_essays', JSON.stringify(next));
-      return next;
-    });
+    const essay = essays.find(x => x.id === essayId);
+    if (!essay) return;
+
+    const isAlreadyFav = essay.isFavorite;
+    if (!isAlreadyFav && favoriteIds.length >= 3) {
+      alert('You can only have a maximum of 3 favorite essays. Please unfavorite another essay first.');
+      return;
+    }
+
+    await updateEssay(essayId, { isFavorite: !isAlreadyFav });
   };
 
   const handleDeleteEssay = async (essayId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (confirm('Are you sure you want to delete this essay? This action cannot be undone.')) {
       const success = await deleteEssay(essayId);
-      if (success) {
-        setFavoriteIds(prev => {
-          const next = prev.filter(id => id !== essayId);
-          localStorage.setItem('studymate_favorite_essays', JSON.stringify(next));
-          return next;
-        });
-      } else {
+      if (!success) {
         alert('Failed to delete the essay. Please try again.');
       }
     }

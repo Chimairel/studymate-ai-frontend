@@ -1863,3 +1863,252 @@ body {
 .skeleton-text.long {
     width: 100%;
 }
+
+/* ── DARK MODE (Premium Slate-Navy Academic Theme) ── */
+html.dark {
+    --ink: #f8fafc;
+    /* Slate 50 (Crisp Slate White) */
+    --paper: #090d16;
+    /* Deep Obsidian Navy (Obsidian Page background) */
+    --cream: #131924;
+    /* Deep Slate Navy (Cards/Panels background) */
+    --accent: #f05c45;
+    /* Warm Coral Red (Elegant Primary Highlight) */
+    --accent-light: #2c1a17;
+    /* Muted Dark Crimson (Alerts/Active states) */
+    --border: #202b3d;
+    /* Midnight Slate (Subtle dark borders) */
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 48px rgba(0, 0, 0, 0.65);
+    --sidebar: #06080f;
+    /* Pure Obsidian Black (Elegant deep sidebar) */
+    --sidebar-text: #94a3b8;
+    /* Slate 400 (Muted Sidebar links) */
+    --green-light: #12281a;
+    --blue-light: #14233c;
+    --muted: #94a3b8;
+    /* Slate 400 (Secondary label details) */
+}
+
+/* Base Body & Container Adjustments */
+html.dark body {
+    background: var(--paper) !important;
+    color: var(--ink) !important;
+}
+
+/* Card, Panel, Toolbar, Titlebar, and Input Overrides */
+html.dark .card,
+html.dark .stat-card,
+html.dark .editor-toolbar,
+html.dark .editor-title-bar,
+html.dark .landing-nav,
+html.dark .hero-visual,
+html.dark .coach-panel,
+html.dark .form-input,
+html.dark select,
+html.dark input,
+html.dark textarea,
+html.dark .word-count-bar,
+html.dark .chat-input-area,
+html.dark .editor-main {
+    background: var(--cream) !important;
+    color: var(--ink) !important;
+    border-color: var(--border) !important;
+}
+
+/* Content Editable Area & Title input */
+html.dark .editor-area {
+    background: var(--paper) !important;
+}
+
+html.dark .editor-textarea {
+    background: transparent !important;
+    color: var(--ink) !important;
+}
+
+html.dark .essay-title-input {
+    color: var(--ink) !important;
+}
+
+/* Dropdowns, Selects, and Options */
+html.dark select.form-input {
+    background-color: var(--cream) !important;
+    color: var(--ink) !important;
+}
+
+html.dark option {
+    background: var(--cream) !important;
+    color: var(--ink) !important;
+}
+
+/* Kebab Menu Dropdown Overrides (Handles inline backgrounds) */
+html.dark .essay-card-header>div {
+    background: var(--cream) !important;
+    border-color: var(--border) !important;
+    box-shadow: var(--shadow) !important;
+}
+
+html.dark .essay-card-header>div button {
+    color: var(--ink) !important;
+}
+
+html.dark .essay-card-header>div button:hover {
+    background: var(--paper) !important;
+}
+
+/* Settings and Rows */
+html.dark .settings-row {
+    border-bottom-color: var(--border) !important;
+}
+
+html.dark .settings-title {
+    color: var(--ink) !important;
+}
+
+/* Quick Advisory Tips */
+html.dark .quick-tip {
+    background: var(--accent-light) !important;
+    border-left-color: var(--accent) !important;
+}
+
+html.dark .quick-tip p {
+    color: var(--ink) !important;
+}
+
+/* List Items & Dashboard Links */
+html.dark .essay-list-item {
+    border-bottom-color: var(--border) !important;
+}
+
+html.dark .essay-list-item:hover {
+    background: rgba(255, 255, 255, 0.02) !important;
+}
+
+/* Outline Buttons */
+html.dark .btn-outline {
+    background: var(--cream) !important;
+    border-color: var(--border) !important;
+    color: var(--ink) !important;
+}
+
+html.dark .btn-outline:hover {
+    background: var(--accent-light) !important;
+    border-color: var(--accent) !important;
+}
+
+html.dark .btn-ghost {
+    color: var(--muted) !important;
+}
+
+html.dark .btn-ghost:hover {
+    color: var(--ink) !important;
+    background: var(--cream) !important;
+}
+
+/* Profile Page Widgets */
+html.dark .profile-avatar {
+    background: var(--accent) !important;
+}
+
+html.dark .profile-badge {
+    background: var(--border) !important;
+    color: var(--ink) !important;
+}
+
+/* Badges */
+html.dark .badge-gold {
+    background: #2e2410 !important;
+    color: #ffd875 !important;
+}
+
+html.dark .badge-muted {
+    background: var(--cream) !important;
+    color: var(--muted) !important;
+}
+
+html.dark .badge-green {
+    background: var(--green-light) !important;
+    color: #4ade80 !important;
+}
+
+html.dark .badge-blue {
+    background: var(--blue-light) !important;
+    color: #60a5fa !important;
+}
+
+/* Sub-Score Progress Bars */
+html.dark .sub-score-bar {
+    background: var(--border) !important;
+}
+
+html.dark .score-ring .ring-bg {
+    stroke: var(--border) !important;
+}
+
+/* Chat Input Bar inside Coach Panel */
+html.dark .chat-input-area {
+    background: var(--cream) !important;
+    border-top-color: var(--border) !important;
+}
+
+html.dark .chat-input {
+    background: var(--paper) !important;
+    border-color: var(--border) !important;
+    color: var(--ink) !important;
+}
+
+/* ── DARK THEME UI ENHANCEMENTS & HARMONIZATIONS ── */
+
+/* Editor Toolbar Button Overrides */
+html.dark .toolbar-btn:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: var(--ink) !important;
+}
+
+html.dark .toolbar-btn.active {
+    background: var(--accent-light) !important;
+    color: var(--accent) !important;
+}
+
+/* Essay Type Dropdown Selector */
+html.dark select.essay-type-tag {
+    background: var(--blue-light) !important;
+    color: #60a5fa !important;
+}
+
+html.dark select.essay-type-tag option {
+    background: var(--cream) !important;
+    color: var(--ink) !important;
+}
+
+/* Progress Page Achievements Cards */
+html.dark .achievement {
+    background: var(--cream) !important;
+    color: var(--ink) !important;
+    border-color: var(--border) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+html.dark .achievement:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: var(--shadow-lg) !important;
+}
+
+html.dark .achievement.unlocked {
+    background: #231c0e !important;
+    /* Elegant warm velvet gold-bronze */
+    border-color: var(--gold) !important;
+    box-shadow: 0 4px 20px rgba(212, 168, 67, 0.08) !important;
+}
+
+html.dark .achievement.locked {
+    background: rgba(255, 255, 255, 0.02) !important;
+    border-color: var(--border) !important;
+    opacity: 0.55;
+}
+
+/* AI Coach Chat Bubbles inside Coach Panel */
+html.dark .chat-msg.coach .chat-bubble {
+    background: var(--paper) !important;
+    border: 1px solid var(--border) !important;
+}

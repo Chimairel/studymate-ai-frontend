@@ -23,8 +23,12 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ data }) => {
   const chartData = data;
 
   const getColorValue = (colorClass: string) => {
-    // If it's a CSS variable inside standard design tokens
-    if (colorClass.startsWith('var(')) return colorClass;
+    if (
+      colorClass.startsWith('var(') || 
+      colorClass.startsWith('#') || 
+      colorClass.startsWith('hsl(') || 
+      colorClass.startsWith('rgb(')
+    ) return colorClass;
     return `var(${colorClass})`;
   };
 

@@ -116,9 +116,21 @@ export const ProgressPage: React.FC = () => {
 
   const unlockedCount = achievementsList.filter(a => a.unlocked).length;
   
-  const chartData = progressStats?.scoreTrend?.map((item: any) => ({
+  const barColors = [
+    'var(--accent)', // Brick Red
+    'var(--gold)',   // Gold
+    'var(--green)',  // Green
+    'var(--blue)',   // Blue
+    '#805ad5',       // Royal Purple
+    '#319795',       // Teal
+    '#dd6b20',       // Dark Orange
+    '#d53f8c'        // Pink
+  ];
+
+  const chartData = progressStats?.scoreTrend?.map((item: any, index: number) => ({
     label: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    value: item.score
+    value: item.score,
+    colorClass: barColors[index % barColors.length]
   }));
 
   return (

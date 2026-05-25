@@ -2,6 +2,7 @@
 
 import React, { useRef } from 'react';
 import Badge from '../ui/Badge';
+import { FeedbackSuggestion } from '../../services/essayService';
 
 interface EditorPaneProps {
   title: string;
@@ -16,7 +17,41 @@ interface EditorPaneProps {
   onTypeChange: (type: 'Argumentative' | 'Expository' | 'Analytical' | 'Narrative') => void;
   onAnalyze: () => void;
   onSummarize: () => void;
+  feedback?: FeedbackSuggestion[];
+  highlightEnabled?: boolean;
 }
+
+const cleanHtmlOfHighlights = (html: string): string => {
+  if (!html) return '';
+  return html.replace(/<span class="grammar-highlight"[^>]*>([\s\S]*?)<\/span>/g, '$1');
+};
+
+const applyHighlights = (html: string, feedbackList: FeedbackSuggestion[], enabled: boolean): string => {
+  if (!html) return '';
+  if (!enabled || !feedbackList || feedbackList.length === 0) return html;
+
+  let highlightedHtml = html;
+  const activeFeedback = feedbackList.filter(item => item.original && !item.accepted);
+
+  for (const item of activeFeedback) {
+    const original = item.original;
+    if (!original) continue;
+
+    try {
+      const escaped = original.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+      // Lookbehind & Lookahead to avoid replacing words inside tag configurations
+      const regex = new RegExp(`(?<!<[^>]*)${escaped}(?![^<]*>)`, 'g');
+      
+      highlightedHtml = highlightedHtml.replace(regex, (match) => {
+        return `<span class="grammar-highlight" style="border-bottom: 2.5px dotted var(--accent); padding-bottom: 1px; background: rgba(198, 75, 49, 0.05); font-weight: 500;" title="${item.message || 'Writing coach suggestion'}">${match}</span>`;
+      });
+    } catch (err) {
+      console.warn('Failed to highlight word:', original, err);
+    }
+  }
+
+  return highlightedHtml;
+};
 
 export const EditorPane: React.FC<EditorPaneProps> = ({
   title,
@@ -31,6 +66,8 @@ export const EditorPane: React.FC<EditorPaneProps> = ({
   onTypeChange,
   onAnalyze,
   onSummarize,
+  feedback = [],
+  highlightEnabled = true,
 }) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const lastContentRef = useRef<string>(content);
@@ -60,19 +97,24 @@ export const EditorPane: React.FC<EditorPaneProps> = ({
   // Sync content from prop ONLY when changed externally (i.e. not by user typing)
   React.useEffect(() => {
     if (editorRef.current) {
-      if (content !== editorRef.current.innerHTML) {
-        if (content !== lastContentRef.current) {
-          editorRef.current.innerHTML = content;
+      const cleanEditorHtml = cleanHtmlOfHighlights(editorRef.current.innerHTML);
+      const cleanPropHtml = cleanHtmlOfHighlights(content);
+
+      if (cleanPropHtml !== cleanEditorHtml) {
+        if (editorRef.current.innerHTML === '' || cleanPropHtml !== cleanHtmlOfHighlights(lastContentRef.current)) {
+          const highlighted = applyHighlights(content, feedback, highlightEnabled);
+          editorRef.current.innerHTML = highlighted;
           lastContentRef.current = content;
         }
       }
     }
-  }, [content]);
+  }, [content, feedback, highlightEnabled]);
 
   const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
     const newHtml = e.currentTarget.innerHTML;
-    lastContentRef.current = newHtml;
-    onContentChange(newHtml);
+    const cleanHtml = cleanHtmlOfHighlights(newHtml);
+    lastContentRef.current = cleanHtml;
+    onContentChange(cleanHtml);
   };
 
   const executeCommand = (command: string, value: string = '') => {

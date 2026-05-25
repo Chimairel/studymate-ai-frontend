@@ -24,14 +24,8 @@ export const ProfilePage: React.FC = () => {
   const [statsLoading, setStatsLoading] = useState(true);
 
   // Preference State
-  const [realTimeFeedback, setRealTimeFeedback] = useState(
-    user?.preferences?.realTimeFeedback ?? true
-  );
   const [grammarHighlights, setGrammarHighlights] = useState(
     user?.preferences?.grammarHighlights ?? true
-  );
-  const [weeklyReport, setWeeklyReport] = useState(
-    user?.preferences?.weeklyReport ?? false
   );
   const [darkMode, setDarkMode] = useState(
     user?.preferences?.darkMode ?? false
@@ -53,6 +47,19 @@ export const ProfilePage: React.FC = () => {
       setStatsLoading(false);
     });
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      setFirstName(user.firstName || user.name?.split(' ')[0] || '');
+      setLastName(user.lastName || user.name?.split(' ').slice(1).join(' ') || '');
+      setEmail(user.email || '');
+      setRole(user.role || 'College Student');
+      setBio(user.bio || '');
+      setGrammarHighlights(user.preferences?.grammarHighlights ?? true);
+      setDarkMode(user.preferences?.darkMode ?? false);
+      setDefaultEssayMode(user.preferences?.defaultEssayMode || 'Argumentative');
+    }
+  }, [user]);
 
   const isDataLoading = statsLoading || essaysLoading;
 
@@ -92,7 +99,7 @@ export const ProfilePage: React.FC = () => {
 
           <div className="grid-equal">
             {/* Personal Info Skeleton */}
-            <div className="card card-padded" style={{ background: 'white' }}>
+            <div className="card card-padded">
               <div className="skeleton" style={{ height: '18px', width: '180px', marginBottom: '24px' }}></div>
               
               <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
@@ -123,7 +130,7 @@ export const ProfilePage: React.FC = () => {
             </div>
 
             {/* Preferences Skeleton */}
-            <div className="card card-padded" style={{ background: 'white' }}>
+            <div className="card card-padded">
               <div className="skeleton" style={{ height: '18px', width: '110px', marginBottom: '24px' }}></div>
 
               {[1, 2, 3, 4].map((i) => (
@@ -164,9 +171,7 @@ export const ProfilePage: React.FC = () => {
         role,
         bio,
         preferences: {
-          realTimeFeedback,
           grammarHighlights,
-          weeklyReport,
           darkMode,
           defaultEssayMode
         }
@@ -314,14 +319,6 @@ export const ProfilePage: React.FC = () => {
             <div className="settings-section">
               <div className="settings-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <div>
-                  <div className="settings-row-label">Real-time Feedback</div>
-                  <div className="settings-row-desc">Get suggestions as you type</div>
-                </div>
-                <Toggle checked={realTimeFeedback} onChange={setRealTimeFeedback} />
-              </div>
-              
-              <div className="settings-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <div>
                   <div className="settings-row-label">Grammar Highlights</div>
                   <div className="settings-row-desc">Underline grammar issues in editor</div>
                 </div>
@@ -330,18 +327,20 @@ export const ProfilePage: React.FC = () => {
 
               <div className="settings-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <div>
-                  <div className="settings-row-label">Weekly Report</div>
-                  <div className="settings-row-desc">Email summary of your progress</div>
-                </div>
-                <Toggle checked={weeklyReport} onChange={setWeeklyReport} />
-              </div>
-
-              <div className="settings-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <div>
                   <div className="settings-row-label">Dark Mode</div>
                   <div className="settings-row-desc">Switch to dark theme</div>
                 </div>
-                <Toggle checked={darkMode} onChange={setDarkMode} />
+                <Toggle 
+                  checked={darkMode} 
+                  onChange={(checked) => {
+                    setDarkMode(checked);
+                    if (checked) {
+                      document.documentElement.classList.add('dark');
+                    } else {
+                      document.documentElement.classList.remove('dark');
+                    }
+                  }} 
+                />
               </div>
             </div>
             

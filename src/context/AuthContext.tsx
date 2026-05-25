@@ -34,6 +34,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
     
+    // Proactively apply dark mode class instantly on mount before the state resolves to prevent flashes!
+    if (storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser);
+        if (parsed.preferences?.darkMode) {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    }
+    
     setTimeout(() => {
       if (storedToken && storedUser) {
         setToken(storedToken);
@@ -46,6 +56,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
     }, 0);
   }, []);
+
+  useEffect(() => {
+    if (isLoading) return; // Prevent overwriting theme classes during loading resolution tick
+    if (user && user.preferences && user.preferences.darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [user, isLoading]);
 
   const login = async (credentials: any) => {
     setIsLoading(true);

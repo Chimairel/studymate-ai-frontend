@@ -17,22 +17,7 @@ export const DashboardHome: React.FC = () => {
   const { essays, setCurrentEssay, isLoading } = useEssay();
   
   const [activeTab, setActiveTab] = React.useState<'recent' | 'favorites'>('recent');
-  const [favoriteIds, setFavoriteIds] = React.useState<string[]>([]);
-  
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('studymate_favorite_essays');
-      if (stored) {
-        try {
-          setFavoriteIds(JSON.parse(stored));
-        } catch (e) {
-          console.error(e);
-        }
-      }
-    }
-  }, []);
-
-  const favoriteEssays = essays.filter(e => favoriteIds.includes(e.id));
+  const favoriteEssays = essays.filter(e => e.isFavorite);
 
   if (isLoading) {
     return (

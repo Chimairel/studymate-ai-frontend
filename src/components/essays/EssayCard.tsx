@@ -67,7 +67,6 @@ export const EssayCard: React.FC<EssayCardProps> = ({
       style={isFavorite ? {
         border: '1.5px solid var(--accent)',
         boxShadow: '0 4px 20px rgba(200, 75, 49, 0.08)',
-        background: 'white',
         position: 'relative'
       } : {
         position: 'relative'
@@ -127,7 +126,7 @@ export const EssayCard: React.FC<EssayCardProps> = ({
                   position: 'absolute',
                   top: '100%',
                   right: '0',
-                  background: 'white',
+                  background: 'var(--cream)',
                   border: '1px solid var(--border)',
                   borderRadius: '8px',
                   boxShadow: '0 4px 16px rgba(0,0,0,0.08)',

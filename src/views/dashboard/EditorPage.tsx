@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useEssay } from '../../hooks/useEssay';
 import { useCoach } from '../../hooks/useCoach';
+import { useAuth } from '../../hooks/useAuth';
 import EditorPane from '../../components/editor/EditorPane';
 import CoachPane from '../../components/editor/CoachPane';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -11,6 +12,7 @@ type EssayType = 'Argumentative' | 'Expository' | 'Analytical' | 'Narrative';
 
 export const EditorPage: React.FC = () => {
   const { essays, currentEssay, setCurrentEssay, addEssay, updateEssay, isLoading } = useEssay();
+  const { user } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
   const queryId = searchParams.get('id');
@@ -45,9 +47,6 @@ export const EditorPage: React.FC = () => {
         const matched = essays.find(e => e.id === queryId);
         if (matched) {
           setCurrentEssay(matched);
-        } else if (essays.length > 0) {
-          // Only clear the URL if essays have loaded and the ID is truly not found
-          router.replace('/dashboard/editor');
         }
       }
     } else {
@@ -55,7 +54,7 @@ export const EditorPage: React.FC = () => {
         setCurrentEssay(null);
       }
     }
-  }, [queryId, essays, isLoading, loading, currentEssay, setCurrentEssay, router]);
+  }, [queryId, essays, isLoading, loading, currentEssay, setCurrentEssay]);
 
   // Sync with currentEssay when it changes
   useEffect(() => {
@@ -67,14 +66,16 @@ export const EditorPage: React.FC = () => {
         currentEssayIdRef.current = currentEssay.id;
       }
     } else {
-      if (currentEssayIdRef.current !== undefined) {
+      // ONLY clear local editor state if we are NOT on a queryId URL route.
+      // If a queryId is present, we are retrieving/editing an essay, so preserve whatever is in local state until loaded!
+      if (!queryId && currentEssayIdRef.current !== undefined) {
         setTitle('');
         setContent('');
         setType('Argumentative');
         currentEssayIdRef.current = undefined;
       }
     }
-  }, [currentEssay]);
+  }, [currentEssay, queryId]);
 
   // Recover unsaved draft on mount (only when creating a new essay)
   useEffect(() => {
@@ -275,6 +276,8 @@ export const EditorPage: React.FC = () => {
           onTypeChange={setType}
           onAnalyze={handleAnalyze}
           onSummarize={handleSummarize}
+          feedback={currentEssay?.feedback || []}
+          highlightEnabled={user?.preferences?.grammarHighlights !== false}
         />
 
         {/* Right pane: coach recommendations & chat */}
