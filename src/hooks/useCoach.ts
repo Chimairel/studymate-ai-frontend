@@ -91,8 +91,10 @@ export function useCoach(essayId: string | undefined) {
       setChatHistory(prev => [...prev, savedMsg]);
 
       return updatedEssay;
-    } catch (e) {
+    } catch (e: any) {
       console.error('Analysis failed', e);
+      const serverError = e.response?.data?.message;
+      alert(serverError || 'AI Coach analysis failed or was interrupted. Please check your network or try again.');
       return null;
     } finally {
       setIsAnalyzing(false);
