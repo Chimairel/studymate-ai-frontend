@@ -170,8 +170,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateUser = async (updates: Partial<User>) => {
     if (!user) return;
     try {
-      await authService.updateMe(updates);
-      const updatedUser = enrichUser({ ...user, ...updates });
+      const response = await authService.updateMe(updates);
+      
+      // Deep merge preferences locally to prevent any lost properties
+      const mergedPreferences = {
+        ...(user.preferences || {}),
+        ...(updates.preferences || {}),
+      };
+      
+      // If the API returned a user, enrich and use that user!
+      // Otherwise, merge locally as a fallback.
+      const apiUser = response?.user || (response as any)?.data?.user || response;
+      const updatedUser = enrichUser(
+        apiUser && (apiUser.email || apiUser.id)
+          ? apiUser
+          : { ...user, ...updates, preferences: mergedPreferences }
+      );
+
       setUser(updatedUser);
       localStorage.setItem('user', JSON.stringify(updatedUser));
     } catch (e) {

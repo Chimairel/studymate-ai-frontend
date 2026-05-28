@@ -34,6 +34,8 @@ export const ProfilePage: React.FC = () => {
     user?.preferences?.defaultEssayMode || 'Argumentative'
   );
 
+  const hasLoadedUser = React.useRef(false);
+
   // Status Notification
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
@@ -49,7 +51,7 @@ export const ProfilePage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (user) {
+    if (user && !hasLoadedUser.current) {
       setFirstName(user.firstName || user.name?.split(' ')[0] || '');
       setLastName(user.lastName || user.name?.split(' ').slice(1).join(' ') || '');
       setEmail(user.email || '');
@@ -58,6 +60,7 @@ export const ProfilePage: React.FC = () => {
       setGrammarHighlights(user.preferences?.grammarHighlights ?? true);
       setDarkMode(user.preferences?.darkMode ?? false);
       setDefaultEssayMode(user.preferences?.defaultEssayMode || 'Argumentative');
+      hasLoadedUser.current = true;
     }
   }, [user]);
 
@@ -322,7 +325,22 @@ export const ProfilePage: React.FC = () => {
                   <div className="settings-row-label">Grammar Highlights</div>
                   <div className="settings-row-desc">Underline grammar issues in editor</div>
                 </div>
-                <Toggle checked={grammarHighlights} onChange={setGrammarHighlights} />
+                <Toggle 
+                  checked={grammarHighlights} 
+                  onChange={async (checked) => {
+                    setGrammarHighlights(checked);
+                    try {
+                      await updateUser({
+                        preferences: {
+                          ...user?.preferences,
+                          grammarHighlights: checked
+                        }
+                      });
+                    } catch (err) {
+                      console.error('Failed to save grammar highlights', err);
+                    }
+                  }} 
+                />
               </div>
 
               <div className="settings-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
@@ -332,12 +350,22 @@ export const ProfilePage: React.FC = () => {
                 </div>
                 <Toggle 
                   checked={darkMode} 
-                  onChange={(checked) => {
+                  onChange={async (checked) => {
                     setDarkMode(checked);
                     if (checked) {
                       document.documentElement.classList.add('dark');
                     } else {
                       document.documentElement.classList.remove('dark');
+                    }
+                    try {
+                      await updateUser({
+                        preferences: {
+                          ...user?.preferences,
+                          darkMode: checked
+                        }
+                      });
+                    } catch (err) {
+                      console.error('Failed to save dark mode', err);
                     }
                   }} 
                 />
